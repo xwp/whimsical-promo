@@ -1,0 +1,694 @@
+/**
+ * Style template — prime-time · "Prime time".
+ *
+ * A broadcast lower-third for the page: glass, light, and a button that looks like
+ * it does something. Gradient surface with a light-catching hairline ring, a
+ * three-layer shadow with an accent glow, an "on-air" light bar that warms up along
+ * the top edge after the card lands, italic 800 headlines. Clicking fires a lens
+ * bloom and a crisp ring — the reward is depth and light, not a joke, so it doesn't
+ * wear out.
+ *
+ * `#whim-promo` becomes the promo's own id on output, and `whim-kf-` is
+ * rewritten per promo. See basic-1.css for the full template contract.
+ */
+
+#whim-promo {
+	/* Surface. --whim-bg is itself a gradient: the token contract allows any CSS
+	   value, so an editor can still replace it with a flat colour. */
+	--whim-bg: linear-gradient(180deg, #fff, #f5f6f8);
+	--whim-border: 0;
+	--whim-text: #14161b;
+	--whim-shadow:
+		0 1px 2px rgba(20, 22, 27, 0.07),
+		0 12px 28px -10px rgba(20, 22, 27, 0.18),
+		0 32px 64px -24px rgba(20, 22, 27, 0.22),
+		0 28px 60px -26px color-mix(in srgb, var(--whim-accent, #c8102e) 32%, transparent);
+	--whim-radius: 18px;
+	--whim-padding: clamp(1.5rem, 4vw, 2.2rem);
+	--whim-max-width: 44rem;
+
+	/* Accent drives the ring, the glow, the button and the bloom. */
+	--whim-accent: #c8102e;
+	--whim-accent-contrast: #fff;
+
+	/* Motion */
+	--whim-duration: 580ms;
+	--whim-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+	--whim-faint: color-mix(in srgb, currentcolor 7%, transparent);
+	--whim-rule: color-mix(in srgb, currentcolor 24%, transparent);
+
+	color: var(--whim-text);
+}
+
+/* See editorial-insert.css for why light-dark() has to be gated rather than given
+   a fallback declaration. */
+@supports (color: light-dark(#fff, #000)) {
+	#whim-promo {
+		--whim-bg: linear-gradient(180deg, light-dark(#fff, #23252d), light-dark(#f5f6f8, #1a1c22));
+		--whim-text: light-dark(#14161b, #eef0f4);
+		--whim-shadow:
+			0 1px 2px light-dark(rgba(20, 22, 27, 0.07), rgba(0, 0, 0, 0.4)),
+			0 12px 28px -10px light-dark(rgba(20, 22, 27, 0.18), rgba(0, 0, 0, 0.45)),
+			0 32px 64px -24px light-dark(rgba(20, 22, 27, 0.22), rgba(0, 0, 0, 0.65)),
+			0 28px 60px -26px color-mix(in srgb, var(--whim-accent, #c8102e) 32%, transparent);
+		--whim-accent: light-dark(#c8102e, #ef5468);
+		--whim-accent-contrast: light-dark(#fff, #2a070d);
+	}
+}
+
+/* ---------------------------------------------------------------------- card */
+
+#whim-promo .whim-promo__card {
+	background: var(--whim-bg);
+	border: var(--whim-border);
+	border-radius: var(--whim-radius);
+	box-shadow: var(--whim-shadow);
+	color: var(--whim-text);
+	padding: var(--whim-padding);
+}
+
+/* Gradient hairline ring — a glass edge catching the light. */
+#whim-promo .whim-promo__card::before {
+	background: linear-gradient(
+		165deg,
+		rgba(255, 255, 255, 0.85),
+		rgba(20, 22, 27, 0.14) 32%,
+		rgba(20, 22, 27, 0.07) 62%,
+		color-mix(in srgb, var(--whim-accent) 45%, transparent)
+	);
+	border-radius: inherit;
+	content: "";
+	inset: 0;
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask-composite: exclude;
+	padding: 1px;
+	pointer-events: none;
+	position: absolute;
+}
+
+/* The on-air light: a slim accent bar glowing on the top edge. */
+#whim-promo .whim-promo__card::after {
+	background: linear-gradient(90deg, transparent, var(--whim-accent) 30% 70%, transparent);
+	block-size: 2px;
+	content: "";
+	filter: drop-shadow(0 0 7px color-mix(in srgb, var(--whim-accent) 80%, transparent));
+	inset-block-start: -1px;
+	inset-inline: 22%;
+	opacity: 0.9;
+	pointer-events: none;
+	position: absolute;
+}
+
+#whim-promo .whim-promo__body > *:first-child {
+	margin-block-start: 0;
+}
+
+#whim-promo .whim-promo__body > *:last-child {
+	margin-block-end: 0;
+}
+
+/* ------------------------------------------------------------- typography */
+
+#whim-promo .whim-promo__body :is(h1, h2, h3, h4, h5, h6) {
+	color: inherit;
+	font-size: clamp(1.35rem, 3vw, 1.65rem);
+	font-style: italic;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1.16;
+	margin-block: 0 0.45em;
+	text-wrap: balance;
+}
+
+#whim-promo .whim-promo__body :is(p, li) {
+	font-size: 1rem;
+	line-height: 1.55;
+	margin-block: 0.5em 0;
+	text-wrap: pretty;
+}
+
+#whim-promo .whim-promo__body :is(ul, ol) {
+	margin-block: 0.75em 0;
+	padding-inline-start: 1.4em;
+}
+
+#whim-promo .whim-promo__body img {
+	block-size: auto;
+	border-radius: calc(var(--whim-radius) - 8px);
+	max-inline-size: 100%;
+}
+
+/* ------------------------------------------- links: accent-underlined */
+
+/* Text derives from --whim-text via currentcolor — never the theme's blue. */
+#whim-promo .whim-promo__body a {
+	border: 0;
+	color: currentcolor;
+	font-weight: 700;
+	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, var(--whim-accent) 65%, transparent);
+	text-decoration-thickness: 2.5px;
+	text-underline-offset: 0.22em;
+	transition: text-decoration-color 160ms linear;
+}
+
+#whim-promo .whim-promo__body a:hover {
+	text-decoration-color: var(--whim-accent);
+}
+
+/* ----------------------------------- forms: immune to hostile theme CSS */
+
+#whim-promo .whim-promo__body form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.7rem;
+	margin-block: 1.25rem 0;
+}
+
+#whim-promo .whim-promo__body input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]) {
+	appearance: none;
+	background: color-mix(in srgb, currentcolor 5%, transparent);
+	block-size: auto;
+	border: 1px solid var(--whim-rule);
+	border-radius: 12px;
+	box-shadow: inset 0 1.5px 3px rgba(20, 22, 27, 0.07);
+	box-sizing: border-box;
+	color: inherit;
+	flex: 1 1 14rem;
+	float: none;
+	font: inherit;
+	font-size: 0.95rem;
+	inline-size: auto;
+	line-height: 1.2;
+	margin: 0;
+	max-inline-size: 100%;
+	min-inline-size: 0;
+	padding: 0.8rem 1.1rem;
+	text-transform: none;
+	transition: border-color 160ms linear;
+}
+
+#whim-promo .whim-promo__body input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):focus {
+	border-color: currentcolor;
+}
+
+#whim-promo .whim-promo__body ::placeholder {
+	color: color-mix(in srgb, currentcolor 55%, transparent);
+	opacity: 1;
+}
+
+/* ---------------------------------------------------------------------- CTAs */
+
+/*
+ * The button you want to press: gloss on top, weight underneath, and an accent
+ * glow that leans toward your cursor. `whim-cta` is added in PHP — see
+ * Render::promote_cta_links(); `p > a:only-child` would also catch a link inside
+ * a sentence, because text nodes are not children for `:only-child`.
+ */
+#whim-promo .whim-promo__body :is(
+	.whim-cta,
+	.wp-block-button__link,
+	button,
+	input[type="submit"],
+	input[type="button"]
+) {
+	align-items: center;
+	appearance: none;
+	background: linear-gradient(
+		180deg,
+		color-mix(in srgb, var(--whim-accent) 82%, #fff),
+		var(--whim-accent) 42%,
+		color-mix(in srgb, var(--whim-accent) 74%, #000)
+	);
+	block-size: auto;
+	border: 0;
+	border-radius: 12px;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.35),
+		inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+		0 1px 2px rgba(20, 22, 27, 0.25),
+		0 10px 24px -8px color-mix(in srgb, var(--whim-accent) 65%, transparent);
+	box-sizing: border-box;
+	color: var(--whim-accent-contrast);
+	cursor: pointer;
+	display: inline-flex;
+	flex: 0 0 auto;
+	float: none;
+	font: inherit;
+	font-size: 0.97rem;
+	font-weight: 700;
+	gap: 0.5em;
+	inline-size: auto;
+	justify-content: center;
+	letter-spacing: 0.015em;
+	line-height: 1.2;
+	margin: 0;
+	min-inline-size: 0;
+	padding: 0.8rem 1.7rem;
+	text-decoration: none;
+	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+	text-transform: none;
+	transition: transform 180ms var(--whim-ease), filter 180ms linear, box-shadow 180ms linear;
+}
+
+#whim-promo .whim-promo__body :is(
+	.whim-cta,
+	.wp-block-button__link,
+	button,
+	input[type="submit"],
+	input[type="button"]
+):hover {
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.45),
+		inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+		0 2px 4px rgba(20, 22, 27, 0.22),
+		0 16px 34px -8px color-mix(in srgb, var(--whim-accent) 80%, transparent);
+	filter: brightness(1.06) saturate(1.05);
+	transform: translateY(-2px) scale(1.015);
+}
+
+#whim-promo .whim-promo__body :is(
+	.whim-cta,
+	.wp-block-button__link,
+	button,
+	input[type="submit"],
+	input[type="button"]
+):active {
+	box-shadow:
+		inset 0 2px 4px rgba(0, 0, 0, 0.3),
+		0 1px 2px rgba(20, 22, 27, 0.2),
+		0 6px 16px -8px color-mix(in srgb, var(--whim-accent) 55%, transparent);
+	filter: brightness(0.95);
+	transform: translateY(1px) scale(0.99);
+}
+
+#whim-promo .whim-promo__body p:has(> .whim-cta) {
+	max-inline-size: none;
+}
+
+#whim-promo .whim-promo__body .wp-block-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+}
+
+/* "Add as a preferred source on Google" — a white chip, legible on the gradient. */
+#whim-promo .whim-promo__body a.whim-btn--google {
+	background: #fff;
+	border: 1px solid #dadce0;
+	box-shadow: 0 1px 3px rgba(20, 22, 27, 0.16);
+	color: #3c4043;
+	filter: none;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	padding: 0.7rem 1.3rem;
+	text-decoration: none;
+	text-shadow: none;
+	transition: transform 180ms var(--whim-ease), box-shadow 180ms linear;
+}
+
+#whim-promo .whim-promo__body a.whim-btn--google:hover {
+	background: #fff;
+	box-shadow: 0 3px 8px rgba(60, 64, 67, 0.3);
+	color: #3c4043;
+	filter: none;
+	transform: translateY(-1px);
+}
+
+#whim-promo .whim-promo__body a.whim-btn--google:active {
+	box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3);
+	filter: none;
+	transform: translateY(0) scale(0.98);
+}
+
+#whim-promo .whim-promo__body a.whim-btn--google::before {
+	animation: none;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath fill='%234285F4' d='M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z'/%3E%3Cpath fill='%2334A853' d='M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z'/%3E%3Cpath fill='%23FBBC05' d='M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z'/%3E%3Cpath fill='%23EA4335' d='M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z'/%3E%3C/svg%3E") center / contain no-repeat;
+	block-size: 1.1em;
+	border: 0;
+	content: "";
+	filter: none;
+	flex: 0 0 auto;
+	inline-size: 1.1em;
+	inset: auto;
+	margin: 0;
+	-webkit-mask: none;
+	mask: none;
+	opacity: 1;
+	position: static;
+	transform: none;
+}
+
+/* An image-only link is the editor's own artwork: a white backing plate rather
+   than the glossy button. promote_cta_links() tags it `whim-cta` too. */
+#whim-promo .whim-promo__body .whim-cta:has(> img:only-child) {
+	background: #fff;
+	border: 1px solid rgba(20, 22, 27, 0.14);
+	box-shadow: 0 1px 3px rgba(20, 22, 27, 0.16);
+	filter: none;
+	line-height: 0;
+	max-inline-size: 100%;
+	padding: 0.5rem 0.75rem;
+	text-shadow: none;
+	transition: transform 180ms var(--whim-ease), box-shadow 180ms linear;
+}
+
+#whim-promo .whim-promo__body .whim-cta:has(> img:only-child):hover {
+	background: #fff;
+	box-shadow: 0 3px 8px rgba(60, 64, 67, 0.3);
+	filter: none;
+	transform: translateY(-1px);
+}
+
+/* ------------------------------------------------------------ focus rings */
+
+#whim-promo :is(a, button, input, select, textarea):focus-visible {
+	border-radius: 10px;
+	outline: 2.5px solid currentcolor;
+	outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------ inline slot */
+
+#whim-promo.whim-promo--inline-hook {
+	margin-block: clamp(1.75rem, 5vw, 3rem);
+}
+
+/* -------------------------------------------------------- animation presets */
+
+#whim-promo .whim-promo__card {
+	transition:
+		opacity var(--whim-duration) var(--whim-ease),
+		transform var(--whim-duration) var(--whim-ease),
+		filter var(--whim-duration) var(--whim-ease);
+	will-change: transform, opacity, filter;
+}
+
+/* Every from-state below is wrapped in :where() so it scores 1-1-0 and the
+   is-revealed reset — 1-2-0 — always wins, whatever the source order. Written
+   flat, the two tie and the later rule wins, which leaves the card stuck at its
+   entry offset instead of settling. */
+#whim-promo:where(.whim-promo--preset-slide-up-spring) .whim-promo__card {
+	filter: blur(4px);
+	transform: translateY(22px) scale(0.955);
+}
+
+#whim-promo:where(.whim-promo--preset-slide-down-spring) .whim-promo__card {
+	filter: blur(4px);
+	transform: translateY(-22px) scale(0.955);
+}
+
+#whim-promo:where(.whim-promo--preset-fade-rise) .whim-promo__card {
+	filter: blur(6px);
+	transform: translateY(12px);
+}
+
+/* Keyed to `is-lit`, not the entrance: inline cards light at mid-screen. */
+#whim-promo .whim-promo__card::after {
+	opacity: 0;
+	transform: scaleX(0.4);
+	transition: opacity 460ms var(--whim-ease) 380ms, transform 560ms var(--whim-ease) 380ms;
+}
+
+#whim-promo.is-revealed .whim-promo__card {
+	filter: none;
+	transform: none;
+}
+
+#whim-promo.is-lit .whim-promo__card::after {
+	opacity: 0.9;
+	transform: none;
+}
+
+/* Easing, not a from-state: full weight, so a presentation can borrow the spring
+   while setting its own travel. */
+@supports (transition-timing-function: linear(0, 1)) {
+	#whim-promo:is(.whim-promo--preset-slide-up-spring, .whim-promo--preset-slide-down-spring) .whim-promo__card {
+		transition-timing-function: linear(
+			0, 0.38 7%, 0.82 14%, 1.04 21%, 1.065 27%, 1.02 37%, 0.995 48%, 1.002 62%, 1
+		);
+	}
+}
+
+/* Dismissal — fades to black. */
+#whim-promo.is-dismissing .whim-promo__card {
+	filter: blur(2px);
+	opacity: 0;
+	transform: scale(0.97);
+	transition-duration: 400ms;
+}
+
+#whim-promo.is-dismissing .whim-promo__card::after {
+	opacity: 0;
+	transition: opacity 250ms linear;
+}
+
+/* ------------------------------------------------------------ exit intent */
+
+#whim-promo.whim-promo--exit-intent .whim-promo__card {
+	margin: clamp(0.75rem, 3vw, 1.5rem) auto;
+	padding-inline-end: calc(var(--whim-padding) + 1.75rem);
+}
+
+/* Bars: compact; the on-air light moves to the exposed edge. Later than the
+   presets above, so a bar wins the 1-1-0 tie between two from-states. */
+#whim-promo:where(.whim-promo--slide-down) .whim-promo__card {
+	transform: translateY(-18px);
+}
+
+#whim-promo:where(.whim-promo--slide-up) .whim-promo__card {
+	transform: translateY(18px);
+}
+
+#whim-promo.whim-promo--slide-down .whim-promo__card,
+#whim-promo.whim-promo--slide-up .whim-promo__card {
+	padding-block: 1.15rem;
+}
+
+#whim-promo.whim-promo--slide-down .whim-promo__card::after {
+	inset-block: auto -1px;
+}
+
+#whim-promo.whim-promo--slide-down .whim-promo__body :is(h1, h2, h3, h4, h5, h6),
+#whim-promo.whim-promo--slide-up .whim-promo__body :is(h1, h2, h3, h4, h5, h6) {
+	font-size: 1.1rem;
+	margin-block-end: 0.2em;
+}
+
+#whim-promo.whim-promo--slide-down .whim-promo__body p,
+#whim-promo.whim-promo--slide-up .whim-promo__body p {
+	font-size: 0.95rem;
+}
+
+/* Modal */
+
+#whim-promo.whim-promo--modal .whim-promo__card {
+	--whim-max-width: 32rem;
+}
+
+#whim-promo:where(.whim-promo--modal) .whim-promo__card {
+	transform: translateY(16px) scale(0.94);
+}
+
+#whim-promo .whim-promo__backdrop {
+	background: rgba(12, 14, 19, 0.55);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+	#whim-promo .whim-promo__backdrop {
+		-webkit-backdrop-filter: blur(6px) saturate(0.75);
+		backdrop-filter: blur(6px) saturate(0.75);
+	}
+}
+
+#whim-promo.is-dismissing .whim-promo__backdrop {
+	opacity: 0;
+	transition-duration: 400ms;
+}
+
+/* --------------------------------- close button: hostile-theme-proof */
+
+#whim-promo .whim-promo__close {
+	background: var(--whim-faint);
+	border-radius: 50%;
+	box-shadow: none;
+	color: inherit;
+	display: grid;
+	float: none;
+	font-family: inherit;
+	font-size: 1.3rem;
+	font-weight: 400;
+	letter-spacing: normal;
+	line-height: 1;
+	opacity: 0.85;
+	place-items: center;
+	text-transform: none;
+	transition: transform 200ms var(--whim-ease), background-color 160ms linear, opacity 160ms linear;
+}
+
+#whim-promo .whim-promo__close:hover,
+#whim-promo .whim-promo__close:focus-visible {
+	background: color-mix(in srgb, currentcolor 13%, transparent);
+	opacity: 1;
+	transform: scale(1.1) rotate(90deg);
+}
+
+/* ------------------------ click micro-interaction: the highlight bloom */
+
+/* A soft lens bloom swells behind the button while a crisp accent ring expands.
+   Replay-worthy, never cartoonish. Gone in 650ms. */
+#whim-promo .whim-promo__body .is-clicked {
+	/* Own stacking context, so the bloom sits behind the button but above the card. */
+	position: relative;
+	z-index: 0;
+}
+
+#whim-promo .whim-promo__body .is-clicked::before {
+	animation: whim-kf-bloom 620ms var(--whim-ease) forwards;
+	background: radial-gradient(
+		circle,
+		rgba(255, 255, 255, 0.9),
+		color-mix(in srgb, var(--whim-accent) 55%, transparent) 40%,
+		transparent 68%
+	);
+	border-radius: 999px;
+	content: "";
+	filter: blur(6px);
+	inset: -1.1rem -1.4rem;
+	pointer-events: none;
+	position: absolute;
+	z-index: -1;
+}
+
+#whim-promo .whim-promo__body .is-clicked::after {
+	animation: whim-kf-bloom-ring 560ms var(--whim-ease) 30ms forwards;
+	border: 2px solid color-mix(in srgb, var(--whim-accent) 85%, #fff);
+	border-radius: 999px;
+	content: "";
+	inset: -0.45rem -0.8rem;
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+}
+
+/* The Google chip's G lives on ::before, so it keeps the ring but skips the bloom. */
+#whim-promo .whim-promo__body a.whim-btn--google.is-clicked::before {
+	animation: none;
+	filter: none;
+	inset: auto;
+	position: static;
+	z-index: auto;
+}
+
+@keyframes whim-kf-bloom {
+	0% {
+		opacity: 0;
+		transform: scale(0.5);
+	}
+
+	22% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+		transform: scale(1.45);
+	}
+}
+
+@keyframes whim-kf-bloom-ring {
+	0% {
+		opacity: 0.9;
+		transform: scale(0.8);
+	}
+
+	100% {
+		opacity: 0;
+		transform: scale(1.45);
+	}
+}
+
+#whim-promo .whim-promo__body :is(a, button).is-clicked {
+	animation: whim-kf-pop 480ms var(--whim-ease);
+}
+
+@keyframes whim-kf-pop {
+	0% {
+		transform: scale(1);
+	}
+
+	30% {
+		transform: scale(0.95);
+	}
+
+	62% {
+		transform: scale(1.05);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+/* --------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+	#whim-promo .whim-promo__card,
+	#whim-promo.whim-promo--preset-slide-up-spring .whim-promo__card,
+	#whim-promo.whim-promo--preset-slide-down-spring .whim-promo__card,
+	#whim-promo.whim-promo--preset-fade-rise .whim-promo__card,
+	#whim-promo.whim-promo--slide-down .whim-promo__card,
+	#whim-promo.whim-promo--slide-up .whim-promo__card,
+	#whim-promo.whim-promo--modal .whim-promo__card {
+		filter: none;
+		transform: none;
+		transition: opacity 200ms linear;
+	}
+
+	#whim-promo .whim-promo__card::after {
+		opacity: 0.9;
+		transform: none;
+		transition: opacity 200ms linear;
+	}
+
+	/* Selector lists mirror the CTA rules above verbatim: a lighter selector would
+	   lose the cascade and leave transform animating. */
+	#whim-promo .whim-promo__body :is(
+		.whim-cta,
+		.wp-block-button__link,
+		button,
+		input[type="submit"],
+		input[type="button"]
+	),
+	#whim-promo .whim-promo__body a.whim-btn--google,
+	#whim-promo .whim-promo__close {
+		transition: background-color 160ms linear, box-shadow 160ms linear, opacity 160ms linear;
+	}
+
+	#whim-promo .whim-promo__body :is(
+		.whim-cta,
+		.wp-block-button__link,
+		button,
+		input[type="submit"],
+		input[type="button"]
+	):is(:hover, :active),
+	#whim-promo .whim-promo__body a.whim-btn--google:is(:hover, :active),
+	#whim-promo .whim-promo__close:hover,
+	#whim-promo .whim-promo__close:focus-visible {
+		filter: none;
+		transform: none;
+	}
+
+	#whim-promo .whim-promo__body :is(a, button).is-clicked {
+		animation: none;
+	}
+
+	#whim-promo .whim-promo__body .is-clicked::before,
+	#whim-promo .whim-promo__body .is-clicked::after {
+		animation: none;
+		content: none;
+	}
+}

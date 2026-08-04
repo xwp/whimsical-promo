@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Whimsical Promo — JS fixture</title>
+
+<!--
+	A static harness for promo.js. No WordPress, no database, no promo posts: the
+	markup below is the skeleton Render emits, hand-written, so the front-end can be
+	tested on any environment and a production data sync cannot disturb it.
+
+	tests/test-class-fixture-markup.php asserts this file's attributes and structural
+	classes still match what Render actually produces — without that, this fixture can
+	drift and keep passing against markup that no longer ships.
+
+	Both the stylesheet and the script are injected below with a fresh cache-buster,
+	because this page itself is a static file the edge will happily cache.
+-->
+
+<script>
+	// Read before promo.js, exactly as Assets::enqueue() prints it.
+	window.whimPromoCfg = { tracking: true, delivery: 'datalayer' };
+
+	// The script pushes here; the tests read it back.
+	window.dataLayer = [];
+
+	// Surfaced so a test can assert init() did not throw.
+	window.__whimFixtureErrors = [];
+	window.addEventListener( 'error', function ( event ) {
+		window.__whimFixtureErrors.push( String( event.message ) );
+	} );
+</script>
+</head>
+<body>
+
+<main>
+	<h1>Whimsical Promo fixture</h1>
+
+	<!-- Tall enough that the promo starts below the fold, so the entrance is observable. -->
+	<div style="height: 200vh">
+		<p>Spacer — scroll down to bring the promo into view.</p>
+	</div>
+
+	<div class="whim-promo-slot" data-whim-group="fixture">
+
+		<div
+			id="whim-promo-9001"
+			class="whim-promo whim-promo--inline-hook whim-promo--preset-fade-rise whim-promo--style-basic-1"
+			data-whim-slug="__whim_fixture_a"
+			data-whim-style="basic-1"
+			data-whim-group="fixture"
+			data-whim-placement="inline_hook"
+			data-whim-days="30"
+			data-whim-gate="interact"
+			data-whim-preset="fade-rise"
+			hidden
+		>
+			<!-- No close button: Render emits one only for exit promos. -->
+			<div class="whim-promo__card">
+				<div class="whim-promo__body">
+					<h2>First promo</h2>
+					<p><a class="whim-cta" href="/subscribe/">Subscribe</a></p>
+				</div>
+			</div>
+		</div>
+
+		<!-- The hand-off target: gate `always`, so it wins outright once the first is spent. -->
+		<div
+			id="whim-promo-9002"
+			class="whim-promo whim-promo--inline-hook whim-promo--preset-fade-rise whim-promo--style-basic-1"
+			data-whim-slug="__whim_fixture_b"
+			data-whim-style="basic-1"
+			data-whim-group="fixture"
+			data-whim-placement="inline_hook"
+			data-whim-days="30"
+			data-whim-gate="always"
+			data-whim-preset="fade-rise"
+			hidden
+		>
+			<div class="whim-promo__card">
+				<div class="whim-promo__body">
+					<h2>Fallback promo</h2>
+					<p><a class="whim-cta" href="/app/">Get the app</a></p>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<div style="height: 100vh"></div>
+</main>
+
+<!--
+	Exit promos live in their own wrapper and are the only ones with a close button and
+	a backdrop. `data-whim-css` is deliberately omitted: it points at a WordPress route,
+	and this fixture must not need one. Open it with ?whim_preview=__whim_fixture_exit,
+	which skips the pointer check and the 5s dwell.
+-->
+<div class="whim-promo-exit" data-whim-group="fixture-exit">
+	<div
+		id="whim-promo-9003"
+		class="whim-promo whim-promo--exit-intent whim-promo--modal whim-promo--preset-fade-rise whim-promo--style-basic-1"
+		data-whim-slug="__whim_fixture_exit"
+		data-whim-style="basic-1"
+		data-whim-group="fixture-exit"
+		data-whim-placement="exit_intent"
+		data-whim-days="30"
+		data-whim-gate="interact"
+		data-whim-preset="fade-rise"
+		data-whim-presentation="modal"
+		hidden
+	>
+		<div class="whim-promo__backdrop" data-whim-close="1"></div>
+		<div class="whim-promo__card" role="dialog" tabindex="-1" aria-modal="true" aria-label="Fixture exit promo">
+			<div class="whim-promo__body">
+				<h2>Exit promo</h2>
+				<p><a class="whim-cta" href="/newsletter/">Sign up</a></p>
+			</div>
+			<button type="button" class="whim-promo__close" data-whim-close="1" aria-label="Dismiss">&times;</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	( function () {
+		// The edge may serve this HTML from cache, which would pin any hardcoded
+		// version. Deriving it at runtime keeps the assets fresh regardless.
+		var bust = '?ver=' + Date.now() + '-' + Math.random().toString( 36 ).slice( 2 );
+
+		var css = document.createElement( 'link' );
+		css.rel = 'stylesheet';
+		css.href = '../../assets/promo-base.css' + bust;
+		document.head.appendChild( css );
+
+		var js = document.createElement( 'script' );
+		js.src = '../../assets/promo.js' + bust;
+		document.body.appendChild( js );
+	}() );
+</script>
+
+</body>
+</html>

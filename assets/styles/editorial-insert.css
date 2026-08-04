@@ -1,0 +1,606 @@
+/**
+ * Style template — editorial-insert · "The editorial insert".
+ *
+ * A pull-quote from the paper itself: set, not sold. Hairline border, warm paper,
+ * a print asterism that settles into place a beat after the card, and a quiet
+ * double-ring sonar ping when the reader says yes. The whimsy is all timing —
+ * it behaves like typography, not a mascot, so it survives the fiftieth view.
+ *
+ * `#whim-promo` becomes the promo's own id on output, and `whim-kf-` is
+ * rewritten per promo. See basic-1.css for the full template contract.
+ */
+
+#whim-promo {
+	/* Surface */
+	--whim-bg: #fffdf8;
+	--whim-border: 1px solid rgba(33, 29, 24, 0.14);
+	--whim-text: #211d18;
+	--whim-shadow: 0 1px 2px rgba(33, 29, 24, 0.04), 0 14px 34px -14px rgba(33, 29, 24, 0.14);
+	--whim-radius: 4px;
+	--whim-padding: clamp(1.4rem, 4vw, 2.1rem);
+	--whim-max-width: 44rem;
+
+	/* Motion */
+	--whim-duration: 600ms;
+	--whim-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+	/* Derived from the text colour, so an editor override of --whim-text carries
+	   through to every hairline and hover wash without touching anything else. */
+	--whim-faint: color-mix(in srgb, currentcolor 8%, transparent);
+	--whim-rule: color-mix(in srgb, currentcolor 28%, transparent);
+
+	color: var(--whim-text);
+}
+
+/*
+ * light-dark() needs guarding, not a fallback declaration. A custom property
+ * accepts any token sequence, so `--whim-bg: light-dark(…)` always parses; the
+ * failure lands later, at `background: var(--whim-bg)`, and invalid-at-
+ * computed-value-time drops that declaration outright rather than falling back to
+ * an earlier one. An unsupported browser would render a transparent card. Hence
+ * the @supports gate with plain light values above it.
+ *
+ * Note this only engages where the host theme declares `color-scheme: dark` — a
+ * light-only site never sees the dark half.
+ */
+@supports (color: light-dark(#fff, #000)) {
+	#whim-promo {
+		--whim-bg: light-dark(#fffdf8, #211e1a);
+		--whim-border: 1px solid light-dark(rgba(33, 29, 24, 0.14), rgba(255, 255, 255, 0.14));
+		--whim-text: light-dark(#211d18, #f2ede5);
+		--whim-shadow:
+			0 1px 2px light-dark(rgba(33, 29, 24, 0.04), rgba(0, 0, 0, 0.3)),
+			0 14px 34px -14px light-dark(rgba(33, 29, 24, 0.14), rgba(0, 0, 0, 0.55));
+	}
+}
+
+/* ---------------------------------------------------------------------- card */
+
+#whim-promo .whim-promo__card {
+	background: var(--whim-bg);
+	border: var(--whim-border);
+	border-radius: var(--whim-radius);
+	box-shadow: var(--whim-shadow);
+	color: var(--whim-text);
+	padding: var(--whim-padding);
+}
+
+/* The asterism — a print typographer's section mark. The quiet signature. */
+#whim-promo .whim-promo__card::before {
+	content: "\2726\2002\2726\2002\2726";
+	display: block;
+	font-size: 0.7rem;
+	letter-spacing: 0.15em;
+	line-height: 1;
+	margin-block-end: 1.1rem;
+	opacity: 0.55;
+	text-align: center;
+}
+
+#whim-promo .whim-promo__body > *:first-child {
+	margin-block-start: 0;
+}
+
+#whim-promo .whim-promo__body > *:last-child {
+	margin-block-end: 0;
+}
+
+/* ------------------------------------------------------------- typography */
+
+#whim-promo .whim-promo__body :is(h1, h2, h3, h4, h5, h6) {
+	color: inherit;
+	font-size: clamp(1.3rem, 3vw, 1.55rem);
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	line-height: 1.22;
+	margin-block: 0 0.5em;
+	text-align: center;
+	text-wrap: balance;
+}
+
+#whim-promo .whim-promo__body :is(p, li) {
+	font-size: 1rem;
+	line-height: 1.55;
+	margin-block: 0.5em 0;
+	text-wrap: pretty;
+}
+
+#whim-promo .whim-promo__body p {
+	text-align: center;
+}
+
+#whim-promo .whim-promo__body :is(ul, ol) {
+	margin-block: 0.75em 0;
+	padding-inline-start: 1.4em;
+	text-align: start;
+}
+
+#whim-promo .whim-promo__body img {
+	block-size: auto;
+	border-radius: calc(var(--whim-radius) / 2);
+	max-inline-size: 100%;
+}
+
+/* -------------------------------------------------- links: always legible */
+
+/* Derived from --whim-text via currentcolor, never the theme's blue. */
+#whim-promo .whim-promo__body a {
+	border: 0;
+	color: currentcolor;
+	font-weight: 600;
+	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, currentcolor 40%, transparent);
+	text-decoration-thickness: 2px;
+	text-underline-offset: 0.22em;
+	transition: text-decoration-color 160ms linear;
+}
+
+#whim-promo .whim-promo__body a:hover {
+	text-decoration-color: currentcolor;
+}
+
+/* ----------------------------------- forms: immune to hostile theme CSS */
+
+#whim-promo .whim-promo__body form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	justify-content: center;
+	margin-block: 1.2rem 0;
+}
+
+#whim-promo .whim-promo__body input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]) {
+	appearance: none;
+	background: color-mix(in srgb, currentcolor 5%, transparent);
+	block-size: auto;
+	border: 1px solid var(--whim-rule);
+	border-radius: 3px;
+	box-shadow: none;
+	box-sizing: border-box;
+	color: inherit;
+	flex: 1 1 14rem;
+	float: none;
+	font: inherit;
+	font-size: 0.95rem;
+	inline-size: auto;
+	line-height: 1.2;
+	margin: 0;
+	max-inline-size: 100%;
+	min-inline-size: 0;
+	padding: 0.7rem 0.95rem;
+	text-transform: none;
+}
+
+#whim-promo .whim-promo__body ::placeholder {
+	color: color-mix(in srgb, currentcolor 55%, transparent);
+	opacity: 1;
+}
+
+/* ---------------------------------------------------------------------- CTAs */
+
+/*
+ * A paragraph holding nothing but a link is a call to action. That decision is
+ * made in PHP (Render::promote_cta_links), which tags the link `whim-cta` —
+ * `p > a:only-child` would also match a link inside a sentence, because text
+ * nodes do not count as children for `:only-child`.
+ */
+#whim-promo .whim-promo__body :is(
+	.whim-cta,
+	.wp-block-button__link,
+	button,
+	input[type="submit"],
+	input[type="button"]
+) {
+	align-items: center;
+	appearance: none;
+	background: transparent;
+	block-size: auto;
+	border: 1.5px solid currentcolor;
+	border-radius: 3px;
+	box-shadow: none;
+	box-sizing: border-box;
+	color: inherit;
+	cursor: pointer;
+	display: inline-flex;
+	flex: 0 0 auto;
+	float: none;
+	font: inherit;
+	font-size: 0.95rem;
+	font-weight: 600;
+	gap: 0.5em;
+	inline-size: auto;
+	justify-content: center;
+	letter-spacing: 0.01em;
+	line-height: 1.2;
+	margin: 0;
+	min-inline-size: 0;
+	padding: 0.7rem 1.4rem;
+	text-decoration: none;
+	text-transform: none;
+	transition: transform 180ms var(--whim-ease), background-color 160ms linear;
+}
+
+#whim-promo .whim-promo__body :is(
+	.whim-cta,
+	.wp-block-button__link,
+	button,
+	input[type="submit"],
+	input[type="button"]
+):hover {
+	background-color: var(--whim-faint);
+	transform: translateY(-1px);
+}
+
+#whim-promo .whim-promo__body :is(
+	.whim-cta,
+	.wp-block-button__link,
+	button,
+	input[type="submit"],
+	input[type="button"]
+):active {
+	transform: translateY(0) scale(0.98);
+}
+
+/* A lone CTA paragraph hugs its button rather than stretching to the measure. */
+#whim-promo .whim-promo__body p:has(> .whim-cta) {
+	max-inline-size: none;
+}
+
+#whim-promo .whim-promo__body .wp-block-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	justify-content: center;
+}
+
+/* "Add as a preferred source on Google" — editors add class whim-btn--google to a
+   link. A white chip, so it reads on any card background, with the multicolour G
+   as an inline data: URI (CSP-safe). */
+#whim-promo .whim-promo__body a.whim-btn--google {
+	background: #fff;
+	border: 1px solid #dadce0;
+	box-shadow: 0 1px 3px rgba(20, 22, 27, 0.16);
+	color: #3c4043;
+	filter: none;
+	text-decoration: none;
+	text-shadow: none;
+	transition: transform 180ms var(--whim-ease), box-shadow 180ms linear;
+}
+
+#whim-promo .whim-promo__body a.whim-btn--google:hover {
+	background: #fff;
+	box-shadow: 0 3px 8px rgba(60, 64, 67, 0.3);
+	color: #3c4043;
+	transform: translateY(-1px);
+}
+
+#whim-promo .whim-promo__body a.whim-btn--google:active {
+	box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3);
+	transform: translateY(0) scale(0.98);
+}
+
+#whim-promo .whim-promo__body a.whim-btn--google::before {
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath fill='%234285F4' d='M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z'/%3E%3Cpath fill='%2334A853' d='M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z'/%3E%3Cpath fill='%23FBBC05' d='M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z'/%3E%3Cpath fill='%23EA4335' d='M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z'/%3E%3C/svg%3E") center / contain no-repeat;
+	block-size: 1.1em;
+	border: 0;
+	content: "";
+	flex: 0 0 auto;
+	inline-size: 1.1em;
+	margin: 0;
+	opacity: 1;
+}
+
+/* An image-only link is the editor's own artwork: a white backing plate, no
+   button chrome. promote_cta_links() tags it `whim-cta` as well, since a link
+   wrapping nothing but an image has no visible text on either side. */
+#whim-promo .whim-promo__body .whim-cta:has(> img:only-child) {
+	background: #fff;
+	border: 1px solid rgba(20, 22, 27, 0.14);
+	box-shadow: 0 1px 3px rgba(20, 22, 27, 0.16);
+	line-height: 0;
+	max-inline-size: 100%;
+	padding: 0.5rem 0.75rem;
+	transition: transform 180ms var(--whim-ease), box-shadow 180ms linear;
+}
+
+#whim-promo .whim-promo__body .whim-cta:has(> img:only-child):hover {
+	background: #fff;
+	box-shadow: 0 3px 8px rgba(60, 64, 67, 0.3);
+	transform: translateY(-1px);
+}
+
+/* ------------------------------------------------------------ focus rings */
+
+#whim-promo :is(a, button, input, select, textarea):focus-visible {
+	border-radius: 3px;
+	outline: 2px solid currentcolor;
+	outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------ inline slot */
+
+#whim-promo.whim-promo--inline-hook {
+	margin-block: clamp(1.75rem, 5vw, 3rem);
+}
+
+/* -------------------------------------------------------- animation presets */
+
+#whim-promo .whim-promo__card {
+	transition:
+		opacity var(--whim-duration) var(--whim-ease),
+		transform var(--whim-duration) var(--whim-ease),
+		filter var(--whim-duration) var(--whim-ease);
+	will-change: transform, opacity, filter;
+}
+
+/* Every from-state below is wrapped in :where() so it scores 1-1-0 and the
+   is-revealed reset — 1-2-0 — always wins, whatever the source order. Written
+   flat, the two tie and the later rule wins, which leaves the card stuck at its
+   entry offset instead of settling. */
+#whim-promo:where(.whim-promo--preset-slide-up-spring) .whim-promo__card {
+	transform: translateY(26px) scale(0.985);
+}
+
+#whim-promo:where(.whim-promo--preset-slide-down-spring) .whim-promo__card {
+	transform: translateY(-26px) scale(0.985);
+}
+
+#whim-promo:where(.whim-promo--preset-fade-rise) .whim-promo__card {
+	filter: blur(7px);
+	transform: translateY(12px);
+}
+
+/* Keyed to `is-lit`, not the entrance: inline cards light at mid-screen. */
+#whim-promo .whim-promo__card::before {
+	opacity: 0;
+	transform: scale(0.6);
+	transition: opacity 420ms var(--whim-ease) 340ms, transform 520ms var(--whim-ease) 340ms;
+}
+
+#whim-promo.is-revealed .whim-promo__card {
+	filter: none;
+	transform: none;
+}
+
+#whim-promo.is-lit .whim-promo__card::before {
+	opacity: 0.55;
+	transform: none;
+}
+
+/* Easing, not a from-state: full weight, so a presentation can borrow the spring
+   while setting its own travel. */
+@supports (transition-timing-function: linear(0, 1)) {
+	#whim-promo:is(.whim-promo--preset-slide-up-spring, .whim-promo--preset-slide-down-spring) .whim-promo__card {
+		transition-timing-function: linear(
+			0, 0.3 8%, 0.65 15%, 0.9 22%, 1.02 30%, 1.035 37%, 1.012 50%, 0.998 62%, 1
+		);
+	}
+}
+
+/* Dismissal — 400ms, a polite bow out. */
+#whim-promo.is-dismissing .whim-promo__card {
+	opacity: 0;
+	transform: translateY(6px) scale(0.985);
+	transition-duration: 400ms;
+}
+
+/* ------------------------------------------------------------ exit intent */
+
+#whim-promo.whim-promo--exit-intent .whim-promo__card {
+	margin: clamp(0.75rem, 3vw, 1.5rem) auto;
+	padding-inline-end: calc(var(--whim-padding) + 1.75rem);
+}
+
+/* Bars: quiet, compact, no ornament. Later than the presets above, so a bar wins
+   the 1-1-0 tie between two from-states and enters off its own edge. */
+#whim-promo:where(.whim-promo--slide-down) .whim-promo__card {
+	transform: translateY(-18px);
+}
+
+#whim-promo:where(.whim-promo--slide-up) .whim-promo__card {
+	transform: translateY(18px);
+}
+
+#whim-promo.whim-promo--slide-down .whim-promo__card,
+#whim-promo.whim-promo--slide-up .whim-promo__card {
+	padding-block: 1.1rem;
+}
+
+#whim-promo.whim-promo--slide-down .whim-promo__card::before,
+#whim-promo.whim-promo--slide-up .whim-promo__card::before {
+	content: none;
+}
+
+#whim-promo.whim-promo--slide-down .whim-promo__body :is(h1, h2, h3, h4, h5, h6),
+#whim-promo.whim-promo--slide-up .whim-promo__body :is(h1, h2, h3, h4, h5, h6) {
+	font-size: 1.05rem;
+	margin-block-end: 0.2em;
+	text-align: start;
+}
+
+#whim-promo.whim-promo--slide-down .whim-promo__body p,
+#whim-promo.whim-promo--slide-up .whim-promo__body p {
+	font-size: 0.95rem;
+	text-align: start;
+}
+
+/* Modal */
+
+#whim-promo.whim-promo--modal .whim-promo__card {
+	--whim-max-width: 32rem;
+}
+
+#whim-promo:where(.whim-promo--modal) .whim-promo__card {
+	transform: translateY(14px) scale(0.96);
+}
+
+#whim-promo .whim-promo__backdrop {
+	background: rgba(26, 21, 15, 0.45);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+	#whim-promo .whim-promo__backdrop {
+		-webkit-backdrop-filter: blur(4px) saturate(0.85);
+		backdrop-filter: blur(4px) saturate(0.85);
+	}
+}
+
+#whim-promo.is-dismissing .whim-promo__backdrop {
+	opacity: 0;
+	transition-duration: 400ms;
+}
+
+/* --------------------------------- close button: hostile-theme-proof */
+
+#whim-promo .whim-promo__close {
+	background: transparent;
+	border-radius: 50%;
+	box-shadow: none;
+	color: inherit;
+	display: grid;
+	float: none;
+	font-family: inherit;
+	font-size: 1.35rem;
+	font-weight: 400;
+	letter-spacing: normal;
+	line-height: 1;
+	opacity: 0.7;
+	place-items: center;
+	text-transform: none;
+	transition: transform 220ms var(--whim-ease), background-color 160ms linear, opacity 160ms linear;
+}
+
+#whim-promo .whim-promo__close:hover,
+#whim-promo .whim-promo__close:focus-visible {
+	background: var(--whim-faint);
+	opacity: 1;
+	transform: rotate(90deg);
+}
+
+/* --------------------------- click micro-interaction: the sonar ping */
+
+/* A quiet double ring — the page acknowledging your yes. */
+#whim-promo .whim-promo__body .is-clicked {
+	position: relative;
+}
+
+#whim-promo .whim-promo__body .is-clicked::before,
+#whim-promo .whim-promo__body .is-clicked::after {
+	animation: whim-kf-ping 700ms var(--whim-ease) forwards;
+	border: 2px solid currentcolor;
+	border-radius: 999px;
+	content: "";
+	inset: -0.45rem -0.8rem;
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+}
+
+#whim-promo .whim-promo__body .is-clicked::after {
+	animation-delay: 130ms;
+	border-width: 1px;
+}
+
+/* The Google chip's G lives on ::before, so the ring only gets ::after there —
+   otherwise the icon vanishes mid-celebration. */
+#whim-promo .whim-promo__body a.whim-btn--google.is-clicked::before {
+	animation: none;
+	border: 0;
+	inset: auto;
+	opacity: 1;
+	position: static;
+}
+
+@keyframes whim-kf-ping {
+	0% {
+		opacity: 0.7;
+		transform: scale(0.8);
+	}
+
+	100% {
+		opacity: 0;
+		transform: scale(1.45);
+	}
+}
+
+#whim-promo .whim-promo__body :is(a, button).is-clicked {
+	animation: whim-kf-press 450ms var(--whim-ease);
+}
+
+@keyframes whim-kf-press {
+	0% {
+		transform: scale(1);
+	}
+
+	30% {
+		transform: scale(0.955);
+	}
+
+	65% {
+		transform: scale(1.02);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+/* --------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+	#whim-promo .whim-promo__card,
+	#whim-promo.whim-promo--preset-slide-up-spring .whim-promo__card,
+	#whim-promo.whim-promo--preset-slide-down-spring .whim-promo__card,
+	#whim-promo.whim-promo--preset-fade-rise .whim-promo__card,
+	#whim-promo.whim-promo--slide-down .whim-promo__card,
+	#whim-promo.whim-promo--slide-up .whim-promo__card,
+	#whim-promo.whim-promo--modal .whim-promo__card {
+		filter: none;
+		transform: none;
+		transition: opacity 200ms linear;
+	}
+
+	#whim-promo .whim-promo__card::before {
+		opacity: 0.55;
+		transform: none;
+		transition: none;
+	}
+
+	/* Selector lists mirror the CTA rules above verbatim: a lighter selector would
+	   lose the cascade and leave transform animating. */
+	#whim-promo .whim-promo__body :is(
+		.whim-cta,
+		.wp-block-button__link,
+		button,
+		input[type="submit"],
+		input[type="button"]
+	),
+	#whim-promo .whim-promo__body a.whim-btn--google,
+	#whim-promo .whim-promo__close {
+		transition: background-color 160ms linear, box-shadow 160ms linear, opacity 160ms linear;
+	}
+
+	#whim-promo .whim-promo__body :is(
+		.whim-cta,
+		.wp-block-button__link,
+		button,
+		input[type="submit"],
+		input[type="button"]
+	):is(:hover, :active),
+	#whim-promo .whim-promo__body a.whim-btn--google:is(:hover, :active),
+	#whim-promo .whim-promo__close:hover,
+	#whim-promo .whim-promo__close:focus-visible {
+		filter: none;
+		transform: none;
+	}
+
+	#whim-promo .whim-promo__body :is(a, button).is-clicked {
+		animation: none;
+	}
+
+	#whim-promo .whim-promo__body .is-clicked::before,
+	#whim-promo .whim-promo__body .is-clicked::after {
+		animation: none;
+		content: none;
+	}
+}
