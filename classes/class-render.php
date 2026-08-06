@@ -141,6 +141,9 @@ class Render {
 			// replace whatever it filters with null.
 			add_action(
 				$hook,
+				// Left untyped: a native `mixed` param makes PHPStan's WordPress rules
+				// flag the `return $value` below as invalid for an add_action() callback,
+				// even though it's required for the add_filter() case this also serves.
 				function ( $value = null ) use ( $hook ) {
 					$this->render_inline_chain( $hook );
 
@@ -163,7 +166,7 @@ class Render {
 	 *
 	 * @return mixed
 	 */
-	public function append_to_content( $content ) {
+	public function append_to_content( mixed $content ): mixed {
 		// the_content also runs for excerpts, secondary queries and every post in an
 		// archive loop, and a single-post feed satisfies all three loop checks.
 		if ( ! is_singular() || ! in_the_loop() || ! is_main_query() || is_feed() ) {
@@ -256,7 +259,7 @@ class Render {
 		return array_values(
 			array_filter(
 				$query->posts,
-				static function ( $promo ) {
+				static function ( mixed $promo ): bool {
 					return $promo instanceof WP_Post;
 				}
 			)
@@ -556,7 +559,7 @@ class Render {
 	public static function promote_cta_links( string $content ): string {
 		$result = preg_replace_callback(
 			'#<p\b[^>]*>(.*?)</p>#is',
-			static function ( $matches ) {
+			static function ( array $matches ): string {
 				$inner = $matches[1];
 
 				// Exactly one link, and the paragraph says nothing else.

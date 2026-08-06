@@ -126,7 +126,7 @@ class Settings {
 		return array_values(
 			array_filter(
 				$parts,
-				static function ( $part ) {
+				static function ( string $part ): bool {
 					return '' !== $part;
 				}
 			)
@@ -140,7 +140,7 @@ class Settings {
 	 *
 	 * @return array{tracking_enabled:bool,delivery:string,content_selectors:string}
 	 */
-	public static function sanitize( $input ): array {
+	public static function sanitize( mixed $input ): array {
 		$defaults = self::defaults();
 		$input    = is_array( $input ) ? $input : [];
 
@@ -171,7 +171,7 @@ class Settings {
 
 		$parts = array_filter(
 			array_map( 'trim', explode( ',', $value ) ),
-			static function ( $part ) {
+			static function ( string $part ): bool {
 				return '' !== $part;
 			}
 		);

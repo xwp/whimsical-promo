@@ -141,7 +141,9 @@ Which element counts as "the article" is a plugin-wide setting, **Promos →
 Settings → Content selectors**: a comma-separated list of CSS selectors tried in
 order, the first match on the page being the element watched. The default is
 
-    .entry-content, .post-content, article, main
+```css
+.entry-content, .post-content, article, main
+```
 
 Point it at the article body rather than at the page. Reaching the end of a wrapper
 that also holds comments, related posts and the footer means the promo arrives long
