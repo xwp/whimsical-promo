@@ -104,7 +104,7 @@ class Post_Type {
 	 *
 	 * @var string[]
 	 */
-	const BOOLEAN_META = [ 'whim_show_until_interacted', 'whim_mobile_end' ];
+	const BOOLEAN_META = [ 'whim_show_until_interacted', 'whim_mobile_end', 'whim_exit_first' ];
 
 	/**
 	 * Hooks.
@@ -144,6 +144,7 @@ class Post_Type {
 			'whim_post_types'            => [ 'post' ],
 			'whim_show_until_interacted' => true,
 			'whim_cookie_days'           => self::DEFAULT_DAYS_INLINE,
+			'whim_exit_first'            => false,
 			'whim_presentation'          => 'slide-down',
 			'whim_mobile_end'            => false,
 			'whim_animation'             => 'slide-up-spring',

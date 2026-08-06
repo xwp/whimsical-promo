@@ -330,6 +330,54 @@ class Render_Test extends Promo_TestCase {
 	}
 
 	/**
+	 * The promo flagged "show this one first" leads the exit chain.
+	 */
+	public function test_exit_first_leads_the_chain(): void {
+		$this->setExpectedDeprecated( 'the_block_template_skip_link' );
+
+		$exit = [ 'whim_placement' => Post_Type::PLACEMENT_EXIT ];
+
+		// Explicit dates because the factory stamps both promos in the same second, and
+		// the newest-first tie-break is the thing the flag has to overtake.
+		$year_round = $this->create_promo(
+			$exit,
+			[
+				'post_name' => 'year-round',
+				'post_date' => '2026-01-01 09:00:00',
+			]
+		);
+
+		$this->create_promo(
+			$exit,
+			[
+				'post_name' => 'promoted',
+				'post_date' => '2026-08-01 09:00:00',
+			]
+		);
+
+		$this->go_to_singular();
+
+		$footer = $this->capture_hook( 'wp_footer' );
+
+		$this->assertGreaterThan(
+			(int) strpos( $footer, 'data-whim-slug="promoted"' ),
+			(int) strpos( $footer, 'data-whim-slug="year-round"' ),
+			'Unflagged, the newest promo leads the chain.'
+		);
+
+		update_post_meta( $year_round, 'whim_exit_first', true );
+		Render::get_instance()->collect();
+
+		$footer = $this->capture_hook( 'wp_footer' );
+
+		$this->assertGreaterThan(
+			(int) strpos( $footer, 'data-whim-slug="year-round"' ),
+			(int) strpos( $footer, 'data-whim-slug="promoted"' ),
+			'The flagged promo has to come first, whatever the query order was.'
+		);
+	}
+
+	/**
 	 * Chain group ids are stable across renders — page caches stay valid.
 	 */
 	public function test_group_id_is_deterministic(): void {

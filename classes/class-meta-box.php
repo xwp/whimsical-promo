@@ -10,6 +10,7 @@ namespace WhimsicalPromo;
 
 use WhimsicalPromo\Singleton\Singleton;
 use WP_Post;
+use WP_Query;
 
 /**
  * Class Meta_Box
@@ -40,6 +41,15 @@ class Meta_Box {
 	 * @var string
 	 */
 	const NOTICE_TRANSIENT = 'whim_rejected_tokens_';
+
+	/**
+	 * How many promos the "show this one first" reset will unpick in a single save.
+	 *
+	 * Far above the handful of promos a site runs, and a backstop rather than a page size.
+	 *
+	 * @var int
+	 */
+	const EXIT_FIRST_LIMIT = 100;
 
 	/**
 	 * Hooks.
@@ -230,6 +240,9 @@ class Meta_Box {
 					<?php esc_html_e( 'Exit intent — when the cursor leaves the page', 'whimsical-promo' ); ?>
 				</option>
 			</select>
+			<p class="description">
+				<?php esc_html_e( 'To turn a promo off, set its status back to Draft. Only published promos are placed on the site.', 'whimsical-promo' ); ?>
+			</p>
 		</div>
 
 		<div class="whim-field">
@@ -275,7 +288,7 @@ class Meta_Box {
 				<?php esc_html_e( 'A few hooks are refused because rendering there breaks the page — wp_head, wp_footer, template_redirect, wp_enqueue_scripts, the_content, the_title and the_excerpt. Saving one of those clears the field.', 'whimsical-promo' ); ?>
 			</p>
 			<p class="description">
-				<?php esc_html_e( 'Promos sharing a hook form a chain: only one shows, the first that the visitor has not interacted with yet, in Order (Page Attributes) sequence. Put a promo on its own hook and it shows independently of the others.', 'whimsical-promo' ); ?>
+				<?php esc_html_e( 'Promos sharing a hook form a chain: only one shows, the first that the visitor has not interacted with yet. They queue by Order (Page Attributes), and promos left on the same Order — which is all of them until you change it — queue newest first. Put a promo on its own hook and it shows independently of the others.', 'whimsical-promo' ); ?>
 			</p>
 		</div>
 
@@ -297,7 +310,7 @@ class Meta_Box {
 				<?php esc_html_e( 'Stop showing once the visitor clicks or submits', 'whimsical-promo' ); ?>
 			</label>
 			<p class="description">
-				<?php esc_html_e( 'Unchecked means the promo shows on every visit and never hands off to the next promo in the chain — this is how you make an always-visible fallback. Put it last in the chain by Order, because an always-visible promo ends the chain.', 'whimsical-promo' ); ?>
+				<?php esc_html_e( 'Unchecked means the promo shows on every visit and never hands off to the next promo in the chain — this is how you make an always-visible fallback. Put it last in the chain, because an always-visible promo ends the chain.', 'whimsical-promo' ); ?>
 			</p>
 		</div>
 
@@ -307,6 +320,20 @@ class Meta_Box {
 				value="<?php echo esc_attr( (string) self::get_value( $post_id, 'whim_cookie_days' ) ); ?>" />
 			<p class="description">
 				<?php esc_html_e( 'Counted from the interaction. Clear it, or set it to 0, and the promo goes back to always showing — the box above unticks itself.', 'whimsical-promo' ); ?>
+			</p>
+		</div>
+
+		<div class="whim-field" id="whim-exit-first-row"<?php echo $is_exit ? '' : ' style="display:none"'; ?>>
+			<label>
+				<input type="checkbox" name="whim_exit_first" value="1"
+					<?php checked( (bool) self::get_value( $post_id, 'whim_exit_first' ) ); ?> />
+				<?php esc_html_e( 'Show this one first', 'whimsical-promo' ); ?>
+			</label>
+			<p class="description">
+				<?php esc_html_e( 'Exit-intent promos take turns: the one that opens is the first the visitor has not seen yet. This moves this promo to the front of that queue, so a campaign running all year can stay published and keep its turn behind a promoted one.', 'whimsical-promo' ); ?>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'Only one promo can be first. Ticking this box unticks it on every other promo.', 'whimsical-promo' ); ?>
 			</p>
 		</div>
 
@@ -452,6 +479,7 @@ class Meta_Box {
 				var hookRow    = document.getElementById( 'whim-hook-row' );
 				var presentRow = document.getElementById( 'whim-presentation-row' );
 				var mobileRow  = document.getElementById( 'whim-mobile-end-row' );
+				var firstRow   = document.getElementById( 'whim-exit-first-row' );
 				var cookieDays = document.getElementById( 'whim_cookie_days' );
 				var dayDefault = {
 					inline: '<?php echo esc_js( (string) Post_Type::DEFAULT_DAYS_INLINE ); ?>',
@@ -547,6 +575,9 @@ class Meta_Box {
 					}
 					if ( mobileRow ) {
 						mobileRow.style.display = isExit ? '' : 'none';
+					}
+					if ( firstRow ) {
+						firstRow.style.display = isExit ? '' : 'none';
 					}
 
 					// Only swap the value while it still holds the other placement's default.
@@ -734,6 +765,17 @@ class Meta_Box {
 
 		update_post_meta( $post_id, 'whim_mobile_end', isset( $_POST['whim_mobile_end'] ) );
 
+		// The checkbox is hidden by CSS rather than removed, so it still posts whatever
+		// it was last left at — and a promo that is no longer an overlay cannot lead the
+		// overlay queue.
+		$exit_first = isset( $_POST['whim_exit_first'] ) && Post_Type::PLACEMENT_EXIT === $placement;
+
+		update_post_meta( $post_id, 'whim_exit_first', $exit_first );
+
+		if ( $exit_first ) {
+			self::clear_exit_first( $post_id );
+		}
+
 		update_post_meta(
 			$post_id,
 			'whim_animation',
@@ -783,6 +825,43 @@ class Meta_Box {
 
 		if ( ! empty( $rejected ) ) {
 			set_transient( self::NOTICE_TRANSIENT . $post_id . '_' . get_current_user_id(), $rejected, MINUTE_IN_SECONDS );
+		}
+	}
+
+	/**
+	 * Unticks "show this one first" everywhere else, so the newest tick is the only one.
+	 *
+	 * Writing meta does not fire `save_post`, so this cannot re-enter save().
+	 *
+	 * @param int $keep_id Promo that keeps the flag.
+	 *
+	 * @return void
+	 */
+	protected static function clear_exit_first( int $keep_id ): void {
+		$flagged = new WP_Query(
+			[
+				'post_type'              => Post_Type::POST_TYPE,
+				'post_status'            => 'any',
+				'posts_per_page'         => self::EXIT_FIRST_LIMIT,
+				'fields'                 => 'ids',
+				'meta_key'               => 'whim_exit_first', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Matches the one flagged promo instead of reading meta for every promo on the site.
+				'meta_value'             => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- As above.
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			]
+		);
+
+		/** @var int[] $ids Narrowed by the `fields` argument above. */
+		$ids = $flagged->posts;
+
+		foreach ( $ids as $other_id ) {
+			// Filtered here rather than with post__not_in, which VIP discourages.
+			if ( $other_id === $keep_id ) {
+				continue;
+			}
+
+			update_post_meta( $other_id, 'whim_exit_first', false );
 		}
 	}
 

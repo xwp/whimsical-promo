@@ -43,6 +43,19 @@ Without Composer, clone the repo into `wp-content/plugins/whimsical-promo/`.
 
 Requires PHP 8.1+.
 
+### Upgrading to 1.2
+
+Nothing to do, and nothing to rewrite. Two behaviour changes worth knowing about
+before you see them in the numbers:
+
+- **Overlays are now rate-limited site-wide.** After any exit-intent promo opens,
+  none opens again for 15 minutes. On a site running a single overlay this is close
+  to invisible; on a site running two it is the difference between a fallback and a
+  nuisance. See [The quiet period](#the-quiet-period).
+- **Exit-intent chain order has a control of its own**, **Show this one first**,
+  instead of depending on Order and publication date. Existing promos are unflagged,
+  so their order is exactly what it was.
+
 ### Upgrading from 1.0
 
 1.1 renames what the plugin puts on the page, at the client's request, so that
@@ -82,15 +95,20 @@ done as its own change.
 2. Fill in **Promo Settings** (below the editor).
 3. Publish. Drafts, pending and scheduled promos never render.
 
-Promos on the same hook form a **chain**, ordered by the **Order** field
-(Page Attributes). The first promo the visitor has not already interacted with
-wins; the rest stay hidden. So the "already subscribed?" fallback is simply the
-next promo in the chain with a higher Order number.
+Promos on the same hook form a **chain**. The first promo the visitor has not
+already interacted with wins; the rest stay hidden. So the "already subscribed?"
+fallback is simply the next promo in the chain.
+
+Chain order comes from the **Order** field (Page Attributes), and promos left on
+the same Order — which is all of them until you change it — queue **newest
+first**. Every exit-intent promo shares one chain regardless of hook, and for
+those there is a plainer control: tick **Show this one first** and that promo
+leads, whatever the dates say (see below).
 
 A promo with **Stop showing once the visitor clicks or submits** unticked is
 always visible: it wins as soon as the chain reaches it, whatever the cookies say,
 and nothing after it can ever show. That is how you build a permanent fallback —
-and why it has to be **last** by Order.
+and why it has to be **last**.
 
 Promos on _different_ hooks are not a chain. They are independent slots and all of
 them render, which is the usual reason a hand-off appears not to work.
@@ -99,12 +117,13 @@ them render, which is the usual reason a hand-off appears not to work.
 
 | Field                                               | What it does                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Placement**                                       | `Inline` renders at a theme hook. `Exit intent` renders in the footer and appears when the cursor leaves the top of the window (desktop).                                                                                                                                                                                                                                                |
+| **Placement**                                       | `Inline` renders at a theme hook. `Exit intent` renders in the footer and appears when the cursor leaves the top of the window (desktop). To turn a promo off, set its status back to Draft — only published promos are placed on the site.                                                                                                                                              |
 | **Preview**                                         | The `whim_preview=<slug>` query string for this promo, with a Copy button. Add it to any page the promo appears on to open it on demand (see below).                                                                                                                                                                                                                                     |
 | **Hook name**                                       | `whim_after_content` — the default — appends the promo to the post body, so a fresh install needs no theme work. Otherwise any action hook your theme fires inside the post. Suggestions come from the `whimsical_promo_hooks` filter and a new promo starts on the first one, so a theme that filters its own hooks to the front sets the default. A few hooks are refused (see below). |
 | **Show on these post types**                        | Public post types the promo may appear on. Nothing checked = never renders.                                                                                                                                                                                                                                                                                                              |
 | **Stop showing once the visitor clicks or submits** | Sets a `whim_seen_<slug>` cookie, which hands off to the next promo in the chain on later visits. Inline promos set it on click or submit; exit-intent promos set it as soon as they open (see below). Unchecked = shows every visit, never hands off.                                                                                                                                   |
 | **Remember for (days)**                             | How long an interaction is remembered, counted from it. Only shown while the box above is ticked; emptying it or setting 0 unticks that box, which is how a promo becomes always-visible. Default 30.                                                                                                                                                                                    |
+| **Show this one first**                             | Moves this promo to the front of the exit-intent queue, so a promoted overlay goes ahead of a campaign that runs all year without either being unpublished. Only one promo can hold it: ticking the box unticks it everywhere else. Exit intent only, off by default (see below).                                                                                                        |
 | **Exit-intent presentation**                        | `slide-down`, `slide-up` or `modal` (only `modal` dims the page). Exit intent only.                                                                                                                                                                                                                                                                                                      |
 | **Also trigger on mobile…**                         | Opens the promo when the reader reaches the end of the article, since a phone has no cursor to leave the page. Exit intent only, off by default (see below).                                                                                                                                                                                                                             |
 | **Animation**                                       | `slide-up-spring`, `slide-down-spring`, `fade-rise` or `none`. The spring pair differ only in which way the card travels — pick the one that matches the edge it enters from. Readers who ask for reduced motion always get a plain crossfade.                                                                                                                                           |
@@ -128,6 +147,40 @@ they filter rather than after it. Use `whim_after_content` instead of `the_conte
 Every other name is allowed, including one your theme has not fired yet. A hook that never
 fires renders nothing, and a name that turns out to be a filter is handed its value back
 untouched — so a typo can cost you the promo, never the page.
+
+### Running two overlays, and which goes first
+
+Every exit-intent promo shares one chain, so two of them already behave as a pair:
+the first opens, spends its cookie, and the next page view gets the second. They
+can never both appear in the same page view.
+
+What decides which is first is **Show this one first**. Without it the queue falls
+back to Order and then to publication date, which is invisible from the promo
+screen and reads as "the newest one always wins". With it, the promoted overlay
+leads and everything else keeps its place behind — so a year-round campaign stays
+published and simply takes its turn later, instead of being unpublished for the
+duration of an event and remembered back afterwards.
+
+The box behaves like a radio spread across posts: ticking it on one promo unticks
+it on every other, and the newest tick is the one that counts. Switching a promo
+to `Inline` clears its flag too, since a promo that is not an overlay cannot lead
+the overlay queue.
+
+### The quiet period
+
+Once any overlay opens, no overlay opens again for **15 minutes**. It is automatic,
+site-wide, and there is nothing to configure.
+
+This is what stops a pair of overlays reading as a sequence. A reader who bounces
+through three articles in a minute gets one overlay, not one per page; the second
+arrives on a later visit, which is the point of having a fallback at all. A promo
+held back this way is **not** spent — nothing is written, and it wins its chain
+normally on the next page view outside the window.
+
+It is kept in a `whim_exit_at` cookie holding the time the last overlay opened, so
+like everything else here it is a browser-side decision and the cached HTML is
+unaffected. Previews are exempt in both directions: opening one does not start a
+quiet period, and an active one does not block a preview.
 
 ### Reaching the end of the content, on mobile
 
@@ -468,6 +521,9 @@ there for theme-side and analytics selectors.
   saw and closed has been spent — it does not reappear on the next visit, and the
   chain hands off to the next promo instead. Inline promos are the opposite: they
   only spend their cookie when the reader actually clicks or submits.
+- **One overlay per 15 minutes, site-wide.** Whichever promo opens starts a quiet
+  period for all of them. A promo held back that way is not spent and wins its
+  chain normally later.
 - **Cache-safe by construction.** The HTML for a URL is byte-identical for every
   visitor: no `wp_is_mobile()`, no UA sniffing, no cookie reads on the server.
   Every per-visitor decision happens in `promo.js`.

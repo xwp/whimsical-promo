@@ -21,6 +21,11 @@
 	var EXIT_DEBOUNCE = 300;
 	var SPARKLE_MS = 700;
 
+	// How long the site stays quiet after any overlay opens, so a reader moving quickly
+	// through several articles gets one overlay rather than one per page view.
+	var EXIT_QUIET_PERIOD = 900000;
+	var EXIT_QUIET_COOKIE = 'whim_exit_at';
+
 	var ENTER_MARGIN = '0px 0px -12% 0px';
 
 	// Symmetric -50% collapses the root box to the viewport's centre line.
@@ -141,6 +146,20 @@
 		}
 
 		writeCookie( COOKIE_PREFIX + attr( promo, 'slug' ), attr( promo, 'days' ) );
+	}
+
+	/** Whether an overlay opened recently enough that this page view sits out. */
+	function inQuietPeriod() {
+		var last = parseInt( readCookie( EXIT_QUIET_COOKIE ), 10 );
+
+		if ( isNaN( last ) ) {
+			return false;
+		}
+
+		var elapsed = new Date().getTime() - last;
+
+		// A negative gap means the clock moved backwards, not that an overlay is due.
+		return elapsed >= 0 && elapsed < EXIT_QUIET_PERIOD;
 	}
 
 	function pushEvent( promo, action, target ) {
@@ -393,6 +412,12 @@
 			return;
 		}
 
+		// Nothing is written here, so the promo is not spent — it simply waits for a page
+		// view outside the window.
+		if ( inQuietPeriod() ) {
+			return;
+		}
+
 		var pointerQuery = window.matchMedia && window.matchMedia( '(hover: hover) and (pointer: fine)' );
 
 		if ( ! pointerQuery || ! pointerQuery.matches ) {
@@ -629,6 +654,12 @@
 
 		reveal( promo );
 		remember( promo );
+
+		// A preview must not start the quiet period, or reviewing one overlay would hide
+		// the real ones from whoever is reviewing.
+		if ( ! isPreview( promo ) ) {
+			writeCookie( EXIT_QUIET_COOKIE, 1 );
+		}
 
 		if ( 'modal' === attr( promo, 'presentation' ) ) {
 			document.body.classList.add( 'whim-has-modal' );

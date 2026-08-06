@@ -121,7 +121,32 @@ class Render {
 			$this->inline[ $hook ][] = $promo;
 		}
 
+		$this->exit_intent = $this->promoted_first( $this->exit_intent );
+
 		$this->attach();
+	}
+
+	/**
+	 * Moves the promo flagged "show this one first" to the head of the exit chain.
+	 *
+	 * @param WP_Post[] $promos Exit-intent promos in query order.
+	 *
+	 * @return WP_Post[]
+	 */
+	protected function promoted_first( array $promos ): array {
+		$promoted = [];
+		$rest     = [];
+
+		foreach ( $promos as $promo ) {
+			if ( Meta_Box::get_value( (int) $promo->ID, 'whim_exit_first' ) ) {
+				$promoted[] = $promo;
+				continue;
+			}
+
+			$rest[] = $promo;
+		}
+
+		return array_merge( $promoted, $rest );
 	}
 
 	/**

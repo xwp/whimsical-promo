@@ -93,6 +93,66 @@ class Meta_Box_Test extends Promo_TestCase {
 	}
 
 	/**
+	 * Only one promo can be first: ticking the box unticks it everywhere else.
+	 */
+	public function test_exit_first_unticks_every_other_promo(): void {
+		wp_set_current_user( $this->create_user( 'administrator' ) );
+
+		$exit = [
+			'whim_placement'  => Post_Type::PLACEMENT_EXIT,
+			'whim_exit_first' => true,
+		];
+
+		$incumbent = $this->create_promo( $exit );
+		$draft     = $this->create_promo( $exit, [ 'post_status' => 'draft' ] );
+		$inline    = $this->create_promo( [ 'whim_exit_first' => true ] );
+		$promo_id  = $this->create_promo();
+
+		$_POST = $this->post_payload(
+			$promo_id,
+			[
+				'whim_placement'  => Post_Type::PLACEMENT_EXIT,
+				'whim_exit_first' => '1',
+			]
+		);
+
+		Meta_Box::get_instance()->save( $promo_id, $this->get_promo( $promo_id ) );
+
+		$this->assertSame( '1', get_post_meta( $promo_id, 'whim_exit_first', true ) );
+		$this->assertSame( '', get_post_meta( $incumbent, 'whim_exit_first', true ) );
+
+		// A draft resurrects on publish, and an inline promo can be switched back to an
+		// overlay — neither may keep a stale flag.
+		$this->assertSame( '', get_post_meta( $draft, 'whim_exit_first', true ) );
+		$this->assertSame( '', get_post_meta( $inline, 'whim_exit_first', true ) );
+	}
+
+	/**
+	 * A promo that is no longer an overlay cannot lead the overlay queue.
+	 */
+	public function test_exit_first_is_dropped_when_the_placement_is_inline(): void {
+		wp_set_current_user( $this->create_user( 'administrator' ) );
+
+		$incumbent = $this->create_promo(
+			[
+				'whim_placement'  => Post_Type::PLACEMENT_EXIT,
+				'whim_exit_first' => true,
+			]
+		);
+
+		$promo_id = $this->create_promo();
+
+		// The row is hidden with CSS rather than removed, so the box still posts whatever
+		// it was left ticked at when the placement changed.
+		$_POST = $this->post_payload( $promo_id, [ 'whim_exit_first' => '1' ] );
+
+		Meta_Box::get_instance()->save( $promo_id, $this->get_promo( $promo_id ) );
+
+		$this->assertSame( '', get_post_meta( $promo_id, 'whim_exit_first', true ) );
+		$this->assertSame( '1', get_post_meta( $incumbent, 'whim_exit_first', true ) );
+	}
+
+	/**
 	 * Without a nonce nothing is written.
 	 */
 	public function test_missing_nonce_is_a_no_op(): void {
