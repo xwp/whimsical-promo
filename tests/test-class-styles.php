@@ -47,15 +47,15 @@ class Styles_Test extends Promo_TestCase {
 		foreach ( Styles::slugs() as $slug ) {
 			$css = Styles::template( $slug );
 
-			$this->assertStringContainsString( '#whim-promo', $css, $slug );
+			$this->assertStringContainsString( '#whim-bogo', $css, $slug );
 
-			// A selector starting at `.whim-promo` would apply to every promo on the
+			// A selector starting at `.whim-bogo` would apply to every promo on the
 			// page, not just this one.
 			foreach ( explode( "\n", $css ) as $number => $line ) {
 				$this->assertStringStartsNotWith(
-					'.whim-promo',
+					'.whim-bogo',
 					ltrim( $line ),
-					$slug . '.css line ' . ( $number + 1 ) . ' is scoped to a class instead of #whim-promo'
+					$slug . '.css line ' . ( $number + 1 ) . ' is scoped to a class instead of #whim-bogo'
 				);
 			}
 		}
@@ -91,7 +91,7 @@ class Styles_Test extends Promo_TestCase {
 			}
 
 			// Declarations survive with their values intact, whitespace aside.
-			$this->assertMatchesRegularExpression( '/#whim-promo[^{]*\{/', $min, $slug . ' lost its scoping' );
+			$this->assertMatchesRegularExpression( '/#whim-bogo[^{]*\{/', $min, $slug . ' lost its scoping' );
 		}
 	}
 
@@ -100,7 +100,7 @@ class Styles_Test extends Promo_TestCase {
 	 * survive — `.body :is(h1)` and `.body:is(h1)` select different elements.
 	 */
 	public function test_minify_keeps_descendant_combinators_before_pseudo_classes(): void {
-		$min = Styles::minify( '#whim-promo .whim-promo__body :is(h1, h2) { color: red; }' );
+		$min = Styles::minify( '#whim-bogo .whim-bogo__body :is(h1, h2) { color: red; }' );
 
 		$this->assertStringContainsString( '__body :is(h1,h2)', $min );
 		$this->assertStringNotContainsString( '__body:is', $min );
@@ -112,7 +112,7 @@ class Styles_Test extends Promo_TestCase {
 	 */
 	public function test_author_css_is_not_minified(): void {
 		$promo_id = $this->create_promo();
-		$authored = "#whim-promo-ID .whim-promo__card {\n\t/* keep me */\n\tcolor: red;\n}";
+		$authored = "#whim-bogo-ID .whim-bogo__card {\n\t/* keep me */\n\tcolor: red;\n}";
 
 		update_post_meta( $promo_id, Styles::META, $authored );
 
@@ -131,7 +131,7 @@ class Styles_Test extends Promo_TestCase {
 		$css = Styles::css_for( $promo_id );
 
 		$this->assertStringNotContainsString( '/*', $css );
-		$this->assertStringContainsString( '#whim-promo-' . $promo_id, $css );
+		$this->assertStringContainsString( '#whim-bogo-' . $promo_id, $css );
 	}
 
 	/**
@@ -167,11 +167,11 @@ class Styles_Test extends Promo_TestCase {
 	 * Scoping rewrites the placeholder and the animation prefix together.
 	 */
 	public function test_scope_rewrites_placeholder_and_keyframes(): void {
-		$css = '#whim-promo .whim-promo__card { animation: whim-kf-pop 1s; } @keyframes whim-kf-pop { to { opacity: 1; } }';
+		$css = '#whim-bogo .whim-bogo__card { animation: whim-kf-pop 1s; } @keyframes whim-kf-pop { to { opacity: 1; } }';
 
 		$scoped = Styles::scope( $css, 412 );
 
-		$this->assertStringContainsString( '#whim-promo-412 .whim-promo__card', $scoped );
+		$this->assertStringContainsString( '#whim-bogo-412 .whim-bogo__card', $scoped );
 		$this->assertStringContainsString( 'animation: whim-kf-412-pop 1s', $scoped );
 		$this->assertStringContainsString( '@keyframes whim-kf-412-pop', $scoped );
 	}
@@ -180,11 +180,11 @@ class Styles_Test extends Promo_TestCase {
 	 * The `ID` placeholder is the form the brief teaches, so it has to scope.
 	 */
 	public function test_scope_rewrites_the_id_placeholder(): void {
-		$css = '#whim-promo-ID .whim-promo__card { animation: whim-kf-ID-flash 1s; } @keyframes whim-kf-ID-flash { to { opacity: 1; } }';
+		$css = '#whim-bogo-ID .whim-bogo__card { animation: whim-kf-ID-flash 1s; } @keyframes whim-kf-ID-flash { to { opacity: 1; } }';
 
 		$scoped = Styles::scope( $css, 4940657 );
 
-		$this->assertStringContainsString( '#whim-promo-4940657 .whim-promo__card', $scoped );
+		$this->assertStringContainsString( '#whim-bogo-4940657 .whim-bogo__card', $scoped );
 		$this->assertStringContainsString( 'animation: whim-kf-4940657-flash 1s', $scoped );
 		$this->assertStringContainsString( '@keyframes whim-kf-4940657-flash', $scoped );
 		$this->assertStringNotContainsString( 'ID', $scoped );
@@ -194,7 +194,7 @@ class Styles_Test extends Promo_TestCase {
 	 * A keyframe name that merely starts with the placeholder's letters is not one.
 	 */
 	public function test_scope_does_not_eat_names_beginning_with_id(): void {
-		$scoped = Styles::scope( '#whim-promo .whim-promo__card { animation: whim-kf-idle 1s; }', 9 );
+		$scoped = Styles::scope( '#whim-bogo .whim-bogo__card { animation: whim-kf-idle 1s; }', 9 );
 
 		$this->assertStringContainsString( 'whim-kf-9-idle', $scoped );
 	}
@@ -204,10 +204,10 @@ class Styles_Test extends Promo_TestCase {
 	 * without teaching a concrete id.
 	 */
 	public function test_to_placeholder_generalises_a_scoped_stylesheet(): void {
-		$scoped = Styles::scope( '#whim-promo .whim-promo__card { animation: whim-kf-pop 1s; }', 412 );
+		$scoped = Styles::scope( '#whim-bogo .whim-bogo__card { animation: whim-kf-pop 1s; }', 412 );
 		$back   = Styles::to_placeholder( $scoped );
 
-		$this->assertStringContainsString( '#whim-promo-ID .whim-promo__card', $back );
+		$this->assertStringContainsString( '#whim-bogo-ID .whim-bogo__card', $back );
 		$this->assertStringContainsString( 'whim-kf-ID-pop', $back );
 		$this->assertStringNotContainsString( '412', $back );
 
@@ -219,9 +219,20 @@ class Styles_Test extends Promo_TestCase {
 	 * The element's own classes stay untouched — only the id root is rewritten.
 	 */
 	public function test_scope_leaves_class_names_alone(): void {
-		$scoped = Styles::scope( '#whim-promo.whim-promo--modal .whim-promo__body a {}', 7 );
+		$scoped = Styles::scope( '#whim-bogo.whim-bogo--modal .whim-bogo__body a {}', 7 );
 
-		$this->assertStringContainsString( '#whim-promo-7.whim-promo--modal .whim-promo__body a', $scoped );
+		$this->assertStringContainsString( '#whim-bogo-7.whim-bogo--modal .whim-bogo__body a', $scoped );
+	}
+
+	/**
+	 * Stored CSS is served as written. The 1.1 prefix change is an editor's job, not a
+	 * rewrite: anything automatic here would have to tell a selector from a value, and
+	 * getting that wrong corrupts working stylesheets.
+	 */
+	public function test_scope_leaves_the_legacy_prefix_alone(): void {
+		$authored = '#whim-promo-ID .whim-promo__card { background: url( "#whim-promo-filter" ); }';
+
+		$this->assertSame( $authored, Styles::scope( $authored, 5 ) );
 	}
 
 	/**
@@ -229,7 +240,7 @@ class Styles_Test extends Promo_TestCase {
 	 * rather than compounding ids and prefixes.
 	 */
 	public function test_scope_is_idempotent(): void {
-		$once  = Styles::scope( '#whim-promo .whim-promo__card { animation: whim-kf-pop 1s; }', 11 );
+		$once  = Styles::scope( '#whim-bogo .whim-bogo__card { animation: whim-kf-pop 1s; }', 11 );
 		$twice = Styles::scope( $once, 11 );
 
 		$this->assertSame( $once, $twice );
@@ -237,8 +248,8 @@ class Styles_Test extends Promo_TestCase {
 		// Pasted from promo 11 into promo 22.
 		$moved = Styles::scope( $once, 22 );
 
-		$this->assertStringContainsString( '#whim-promo-22 ', $moved );
-		$this->assertStringNotContainsString( '#whim-promo-11', $moved );
+		$this->assertStringContainsString( '#whim-bogo-22 ', $moved );
+		$this->assertStringNotContainsString( '#whim-bogo-11', $moved );
 		$this->assertStringContainsString( 'whim-kf-22-pop', $moved );
 		$this->assertStringNotContainsString( 'whim-kf-11-pop', $moved );
 	}
@@ -273,32 +284,32 @@ class Styles_Test extends Promo_TestCase {
 	 */
 	public static function data_unconfined_css(): array {
 		return [
-			'bare type selector'    => [ 'p{font-weight:bold}', '#whim-promo-412 p{font-weight:bold}' ],
-			'body'                  => [ 'body{overflow:hidden}', '#whim-promo-412 body{overflow:hidden}' ],
-			'root custom property'  => [ ':root{--x:red}', '#whim-promo-412 :root{--x:red}' ],
-			'universal'             => [ '*{margin:0}', '#whim-promo-412 *{margin:0}' ],
+			'bare type selector'    => [ 'p{font-weight:bold}', '#whim-bogo-412 p{font-weight:bold}' ],
+			'body'                  => [ 'body{overflow:hidden}', '#whim-bogo-412 body{overflow:hidden}' ],
+			'root custom property'  => [ ':root{--x:red}', '#whim-bogo-412 :root{--x:red}' ],
+			'universal'             => [ '*{margin:0}', '#whim-bogo-412 *{margin:0}' ],
 
 			// Every part of the list, not just the first.
-			'selector list'         => [ 'p,.sidebar{color:red}', '#whim-promo-412 p,#whim-promo-412 .sidebar{color:red}' ],
+			'selector list'         => [ 'p,.sidebar{color:red}', '#whim-bogo-412 p,#whim-bogo-412 .sidebar{color:red}' ],
 
 			// A foreign promo id is not this promo's scope.
-			'another promo id'      => [ '#whim-promo-999 p{color:red}', '#whim-promo-412 #whim-promo-999 p{color:red}' ],
+			'another promo id'      => [ '#whim-bogo-999 p{color:red}', '#whim-bogo-412 #whim-bogo-999 p{color:red}' ],
 
 			// An id that merely starts with ours.
-			'id with a longer tail' => [ '#whim-promo-4120 p{color:red}', '#whim-promo-412 #whim-promo-4120 p{color:red}' ],
+			'id with a longer tail' => [ '#whim-bogo-4120 p{color:red}', '#whim-bogo-412 #whim-bogo-4120 p{color:red}' ],
 
-			'inside a media query'  => [ '@media screen{p{color:red}}', '@media screen{#whim-promo-412 p{color:red}}' ],
-			'inside @supports'      => [ '@supports (display:grid){p{color:red}}', '@supports (display:grid){#whim-promo-412 p{color:red}}' ],
-			'inside @container'     => [ '@container (inline-size < 24rem){p{color:red}}', '@container (inline-size < 24rem){#whim-promo-412 p{color:red}}' ],
+			'inside a media query'  => [ '@media screen{p{color:red}}', '@media screen{#whim-bogo-412 p{color:red}}' ],
+			'inside @supports'      => [ '@supports (display:grid){p{color:red}}', '@supports (display:grid){#whim-bogo-412 p{color:red}}' ],
+			'inside @container'     => [ '@container (inline-size < 24rem){p{color:red}}', '@container (inline-size < 24rem){#whim-bogo-412 p{color:red}}' ],
 
 			// Offsets, not elements.
 			'keyframe offsets'      => [ '@keyframes whim-kf-412-x{from{opacity:0}to{opacity:1}}', '@keyframes whim-kf-412-x{from{opacity:0}to{opacity:1}}' ],
 
 			// Already scoped, in each of the forms a selector can continue with.
-			'scoped descendant'     => [ '#whim-promo-412 .whim-promo__card{color:red}', '#whim-promo-412 .whim-promo__card{color:red}' ],
-			'scoped compound'       => [ '#whim-promo-412.whim-promo--modal{color:red}', '#whim-promo-412.whim-promo--modal{color:red}' ],
-			'scoped pseudo'         => [ '#whim-promo-412:where(.x) p{color:red}', '#whim-promo-412:where(.x) p{color:red}' ],
-			'the wrapper itself'    => [ '#whim-promo-412{color:red}', '#whim-promo-412{color:red}' ],
+			'scoped descendant'     => [ '#whim-bogo-412 .whim-bogo__card{color:red}', '#whim-bogo-412 .whim-bogo__card{color:red}' ],
+			'scoped compound'       => [ '#whim-bogo-412.whim-bogo--modal{color:red}', '#whim-bogo-412.whim-bogo--modal{color:red}' ],
+			'scoped pseudo'         => [ '#whim-bogo-412:where(.x) p{color:red}', '#whim-bogo-412:where(.x) p{color:red}' ],
+			'the wrapper itself'    => [ '#whim-bogo-412{color:red}', '#whim-bogo-412{color:red}' ],
 		];
 	}
 
@@ -307,12 +318,12 @@ class Styles_Test extends Promo_TestCase {
 	 */
 	public function test_confine_does_not_split_inside_functions_or_attributes(): void {
 		$this->assertSame(
-			'#whim-promo-412 :is(h1,h2){color:red}',
+			'#whim-bogo-412 :is(h1,h2){color:red}',
 			Styles::confine( ':is(h1,h2){color:red}', 412 )
 		);
 
 		$this->assertSame(
-			'#whim-promo-412 input[type="a,b"],#whim-promo-412 button{color:red}',
+			'#whim-bogo-412 input[type="a,b"],#whim-bogo-412 button{color:red}',
 			Styles::confine( 'input[type="a,b"],button{color:red}', 412 )
 		);
 	}
@@ -322,12 +333,12 @@ class Styles_Test extends Promo_TestCase {
 	 */
 	public function test_confine_ignores_braces_in_comments_and_strings(): void {
 		$this->assertSame(
-			'/* } */#whim-promo-412 p{color:red}',
+			'/* } */#whim-bogo-412 p{color:red}',
 			Styles::confine( '/* } */p{color:red}', 412 )
 		);
 
 		$this->assertSame(
-			'#whim-promo-412 p{background:url("data:image/svg+xml,<svg>{}</svg>")}',
+			'#whim-bogo-412 p{background:url("data:image/svg+xml,<svg>{}</svg>")}',
 			Styles::confine( 'p{background:url("data:image/svg+xml,<svg>{}</svg>")}', 412 )
 		);
 	}
@@ -338,8 +349,8 @@ class Styles_Test extends Promo_TestCase {
 	 */
 	public function test_confine_leaves_nested_selectors_alone(): void {
 		$this->assertSame(
-			'#whim-promo-412 .whim-promo__card{& p{color:red}}',
-			Styles::confine( '.whim-promo__card{& p{color:red}}', 412 )
+			'#whim-bogo-412 .whim-bogo__card{& p{color:red}}',
+			Styles::confine( '.whim-bogo__card{& p{color:red}}', 412 )
 		);
 	}
 
@@ -353,7 +364,7 @@ class Styles_Test extends Promo_TestCase {
 
 		$css = Styles::css_for( $promo_id );
 
-		$this->assertStringContainsString( '#whim-promo-' . $promo_id . ' p', $css );
+		$this->assertStringContainsString( '#whim-bogo-' . $promo_id . ' p', $css );
 		$this->assertStringNotContainsString( "\np {", "\n" . $css );
 	}
 
@@ -404,7 +415,7 @@ class Styles_Test extends Promo_TestCase {
 
 		$css = Styles::css_for( $promo_id );
 
-		$this->assertStringContainsString( '#whim-promo-' . $promo_id, $css );
+		$this->assertStringContainsString( '#whim-bogo-' . $promo_id, $css );
 		$this->assertStringContainsString( 'whim-kf-' . $promo_id . '-ping', $css );
 	}
 
@@ -415,11 +426,11 @@ class Styles_Test extends Promo_TestCase {
 	public function test_css_for_sanitizes_stored_meta(): void {
 		$promo_id = $this->create_promo();
 
-		update_post_meta( $promo_id, Styles::META, '#whim-promo a { color: red }</style><script>x</script>' );
+		update_post_meta( $promo_id, Styles::META, '#whim-bogo a { color: red }</style><script>x</script>' );
 
 		$css = Styles::css_for( $promo_id );
 
-		$this->assertStringContainsString( '#whim-promo-' . $promo_id . ' a { color: red }', $css );
+		$this->assertStringContainsString( '#whim-bogo-' . $promo_id . ' a { color: red }', $css );
 		$this->assertStringNotContainsString( '</', $css );
 	}
 }

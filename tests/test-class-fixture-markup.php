@@ -46,6 +46,7 @@ class Fixture_Markup_Test extends Promo_TestCase {
 			[
 				'whim_placement'    => Post_Type::PLACEMENT_EXIT,
 				'whim_presentation' => 'modal',
+				'whim_mobile_end'   => true,
 			]
 		);
 
@@ -101,7 +102,7 @@ class Fixture_Markup_Test extends Promo_TestCase {
 		$rendered = $this->rendered();
 		$fixture  = self::fixture();
 
-		foreach ( [ 'whim-promo-slot', 'whim-promo__card', 'whim-promo__body', 'whim-promo__close', 'data-whim-close' ] as $part ) {
+		foreach ( [ 'whim-bogo-slot', 'whim-bogo__card', 'whim-bogo__body', 'whim-bogo__close', 'data-whim-close' ] as $part ) {
 			$this->assertStringContainsString( $part, $fixture, $part . ' is missing from the fixture' );
 			$this->assertStringContainsString( $part, $rendered, $part . ' is no longer rendered' );
 		}
@@ -128,8 +129,8 @@ class Fixture_Markup_Test extends Promo_TestCase {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Plugin source on local disk.
 		$script = (string) file_get_contents( dirname( __DIR__ ) . '/assets/promo.js' );
 
-		$this->assertStringContainsString( 'window.whimPromoCfg', $script );
-		$this->assertStringContainsString( 'window.whimPromoCfg', self::fixture() );
+		$this->assertStringContainsString( 'window.whimBogoCfg', $script );
+		$this->assertStringContainsString( 'window.whimBogoCfg', self::fixture() );
 	}
 
 	/**

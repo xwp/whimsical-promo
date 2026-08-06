@@ -33,7 +33,7 @@ class CSS_Route {
 	 *
 	 * @var string
 	 */
-	const QUERY_VAR = 'whim_promo_css';
+	const QUERY_VAR = 'whim_bogo_css';
 
 	/**
 	 * Query argument carrying the CSS fingerprint.

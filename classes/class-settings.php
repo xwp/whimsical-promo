@@ -38,7 +38,7 @@ class Settings {
 	 *
 	 * @var string
 	 */
-	const EVENT_NAME = 'whimsical_promo';
+	const EVENT_NAME = 'whimsical_bogo';
 
 	/**
 	 * Allowed delivery modes.
@@ -46,6 +46,20 @@ class Settings {
 	 * @var string[]
 	 */
 	const DELIVERY_MODES = [ 'datalayer', 'gtag' ];
+
+	/**
+	 * Elements whose end counts as "finished reading", most specific first.
+	 *
+	 * @var string
+	 */
+	const DEFAULT_CONTENT_SELECTORS = '.entry-content, .post-content, article, main';
+
+	/**
+	 * Maximum accepted length of the selector list.
+	 *
+	 * @var int
+	 */
+	const SELECTORS_MAX_LENGTH = 500;
 
 	/**
 	 * Hooks.
@@ -60,19 +74,20 @@ class Settings {
 	/**
 	 * Default option values.
 	 *
-	 * @return array{tracking_enabled:bool,delivery:string}
+	 * @return array{tracking_enabled:bool,delivery:string,content_selectors:string}
 	 */
 	public static function defaults(): array {
 		return [
-			'tracking_enabled' => true,
-			'delivery'         => 'datalayer',
+			'tracking_enabled'  => true,
+			'delivery'          => 'datalayer',
+			'content_selectors' => self::DEFAULT_CONTENT_SELECTORS,
 		];
 	}
 
 	/**
 	 * Current settings, merged over defaults.
 	 *
-	 * @return array{tracking_enabled:bool,delivery:string}
+	 * @return array{tracking_enabled:bool,delivery:string,content_selectors:string}
 	 */
 	public static function get(): array {
 		$stored = get_option( self::OPTION, null );
@@ -88,15 +103,34 @@ class Settings {
 	/**
 	 * Config handed to promo.js.
 	 *
-	 * @return array{tracking:bool,delivery:string}
+	 * @return array{tracking:bool,delivery:string,contentSelectors:string[]}
 	 */
 	public static function js_config(): array {
 		$settings = self::get();
 
 		return [
-			'tracking' => $settings['tracking_enabled'],
-			'delivery' => $settings['delivery'],
+			'tracking'         => $settings['tracking_enabled'],
+			'delivery'         => $settings['delivery'],
+			'contentSelectors' => self::selector_list(),
 		];
+	}
+
+	/**
+	 * The content selectors as a list, in the order the script should try them.
+	 *
+	 * @return string[]
+	 */
+	public static function selector_list(): array {
+		$parts = array_map( 'trim', explode( ',', self::get()['content_selectors'] ) );
+
+		return array_values(
+			array_filter(
+				$parts,
+				static function ( $part ) {
+					return '' !== $part;
+				}
+			)
+		);
 	}
 
 	/**
@@ -104,18 +138,45 @@ class Settings {
 	 *
 	 * @param mixed $input Raw option value.
 	 *
-	 * @return array{tracking_enabled:bool,delivery:string}
+	 * @return array{tracking_enabled:bool,delivery:string,content_selectors:string}
 	 */
 	public static function sanitize( $input ): array {
 		$defaults = self::defaults();
 		$input    = is_array( $input ) ? $input : [];
 
-		$delivery = isset( $input['delivery'] ) && is_string( $input['delivery'] ) ? $input['delivery'] : '';
+		$delivery  = isset( $input['delivery'] ) && is_string( $input['delivery'] ) ? $input['delivery'] : '';
+		$selectors = isset( $input['content_selectors'] ) && is_string( $input['content_selectors'] ) ? $input['content_selectors'] : '';
 
 		return [
-			'tracking_enabled' => ! empty( $input['tracking_enabled'] ),
-			'delivery'         => in_array( $delivery, self::DELIVERY_MODES, true ) ? $delivery : $defaults['delivery'],
+			'tracking_enabled'  => ! empty( $input['tracking_enabled'] ),
+			'delivery'          => in_array( $delivery, self::DELIVERY_MODES, true ) ? $delivery : $defaults['delivery'],
+			'content_selectors' => self::sanitize_selectors( $selectors ),
 		];
+	}
+
+	/**
+	 * Normalises the selector list, falling back to the default when nothing usable
+	 * survives — an empty list would leave the mobile trigger with nothing to watch.
+	 *
+	 * @param string $value Raw comma-separated selector list.
+	 *
+	 * @return string
+	 */
+	public static function sanitize_selectors( string $value ): string {
+		$value = trim( wp_strip_all_tags( $value ) );
+
+		if ( '' === $value || strlen( $value ) > self::SELECTORS_MAX_LENGTH ) {
+			return self::DEFAULT_CONTENT_SELECTORS;
+		}
+
+		$parts = array_filter(
+			array_map( 'trim', explode( ',', $value ) ),
+			static function ( $part ) {
+				return '' !== $part;
+			}
+		);
+
+		return empty( $parts ) ? self::DEFAULT_CONTENT_SELECTORS : implode( ', ', $parts );
 	}
 
 	/**
@@ -159,11 +220,11 @@ class Settings {
 	 */
 	public static function payload_sample(): string {
 		return "window.dataLayer.push( {\n"
-			. "    event: 'whimsical_promo',\n"
-			. "    promo_id: 'newsletter-inline',   // the promo post slug\n"
-			. "    promo_placement: 'inline_hook',  // inline_hook | exit_intent\n"
-			. "    promo_action: 'view',            // view | click | submit | dismiss\n"
-			. "    promo_target: '/subscribe/'      // link href or form id, on click/submit\n"
+			. "    event: '" . self::EVENT_NAME . "',\n"
+			. "    bogo_id: 'newsletter-inline',   // the promo post slug\n"
+			. "    bogo_placement: 'inline_hook',  // inline_hook | exit_intent\n"
+			. "    bogo_action: 'view',            // view | click | submit | dismiss\n"
+			. "    bogo_target: '/subscribe/'      // link href or form id, on click/submit\n"
 			. '} );';
 	}
 
@@ -223,6 +284,44 @@ class Settings {
 					</tbody>
 				</table>
 
+				<h2><?php esc_html_e( 'End of the content', 'whimsical-promo' ); ?></h2>
+				<p>
+					<?php esc_html_e( 'Phones and tablets have no cursor to leave the page, so an exit-intent promo can be set to open when the reader reaches the end of the article instead. That is a per-promo checkbox; this is the element it measures.', 'whimsical-promo' ); ?>
+				</p>
+
+				<table class="form-table" role="presentation">
+					<tbody>
+						<tr>
+							<th scope="row">
+								<label for="whim_content_selectors"><?php esc_html_e( 'Content selectors', 'whimsical-promo' ); ?></label>
+							</th>
+							<td>
+								<input type="text" class="large-text code" id="whim_content_selectors"
+									name="<?php echo esc_attr( self::OPTION ); ?>[content_selectors]"
+									value="<?php echo esc_attr( $settings['content_selectors'] ); ?>" />
+								<p class="description">
+									<?php esc_html_e( 'CSS selectors, comma separated, tried in order — the first one that matches the page is the element watched. Leave it empty to go back to the default.', 'whimsical-promo' ); ?>
+								</p>
+								<p class="description">
+									<?php esc_html_e( 'The comma is the separator between entries, so a selector that contains one of its own — :is(article, main) — has to be written as two entries instead. Anything the browser cannot parse is skipped, and the next entry is tried.', 'whimsical-promo' ); ?>
+								</p>
+								<p class="description">
+									<?php
+									printf(
+										/* translators: %s: the default selector list. */
+										esc_html__( 'Default: %s', 'whimsical-promo' ),
+										'<code>' . esc_html( self::DEFAULT_CONTENT_SELECTORS ) . '</code>'
+									);
+									?>
+								</p>
+								<p class="description">
+									<?php esc_html_e( 'Point this at the article body rather than the page: reaching the end of a wrapper that also holds comments, related posts and the footer means the promo arrives long after the reader finished. If nothing on a page matches, the promo simply does not open there.', 'whimsical-promo' ); ?>
+								</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
 				<?php submit_button(); ?>
 			</form>
 
@@ -245,7 +344,7 @@ class Settings {
 
 			<h2><?php esc_html_e( 'Set it up in Google Tag Manager', 'whimsical-promo' ); ?></h2>
 			<ol>
-				<li><?php esc_html_e( 'Variables → New → Data Layer Variable, once per field: promo_id, promo_placement, promo_action, promo_target. Name them dlv - promo_id and so on.', 'whimsical-promo' ); ?></li>
+				<li><?php esc_html_e( 'Variables → New → Data Layer Variable, once per field: bogo_id, bogo_placement, bogo_action, bogo_target. Name them dlv - bogo_id and so on.', 'whimsical-promo' ); ?></li>
 				<li>
 					<?php
 					printf(
@@ -273,7 +372,7 @@ class Settings {
 
 			<h2><?php esc_html_e( 'Make the data usable in GA4', 'whimsical-promo' ); ?></h2>
 			<ol>
-				<li><?php esc_html_e( 'Admin → Custom definitions → Create custom dimension. Scope: Event. One per parameter: promo_id, promo_placement, promo_action, promo_target.', 'whimsical-promo' ); ?></li>
+				<li><?php esc_html_e( 'Admin → Custom definitions → Create custom dimension. Scope: Event. One per parameter: bogo_id, bogo_placement, bogo_action, bogo_target.', 'whimsical-promo' ); ?></li>
 				<li><?php esc_html_e( 'Wait for data — custom dimensions only populate reports from the moment they are created.', 'whimsical-promo' ); ?></li>
 				<li>
 					<?php

@@ -93,8 +93,8 @@ class Render_Test extends Promo_TestCase {
 
 		$output = $this->capture_hook( 'totally_custom_hook' );
 
-		$this->assertStringContainsString( 'class="whim-promo-slot"', $output );
-		$this->assertStringContainsString( 'whim-promo--inline-hook', $output );
+		$this->assertStringContainsString( 'class="whim-bogo-slot"', $output );
+		$this->assertStringContainsString( 'whim-bogo--inline-hook', $output );
 	}
 
 	/**
@@ -106,12 +106,12 @@ class Render_Test extends Promo_TestCase {
 
 		$filtered = $this->filter_the_content( 'Body copy.' );
 
-		$this->assertStringContainsString( 'class="whim-promo-slot"', $filtered );
+		$this->assertStringContainsString( 'class="whim-bogo-slot"', $filtered );
 
 		// Appended, not prepended: priority 20 runs after wpautop, so the chain lands
 		// past the body rather than above it.
 		$this->assertLessThan(
-			strpos( $filtered, 'whim-promo-slot' ),
+			strpos( $filtered, 'whim-bogo-slot' ),
 			strpos( $filtered, 'Body copy.' )
 		);
 	}
@@ -128,7 +128,7 @@ class Render_Test extends Promo_TestCase {
 		$filtered = $this->filter_the_content( 'Body copy.' );
 
 		$this->assertStringContainsString( 'Body copy.', $filtered );
-		$this->assertStringNotContainsString( 'whim-promo-slot', $filtered );
+		$this->assertStringNotContainsString( 'whim-bogo-slot', $filtered );
 	}
 
 	/**
@@ -145,7 +145,7 @@ class Render_Test extends Promo_TestCase {
 		$output = (string) ob_get_clean();
 
 		$this->assertSame( 'kept', $value );
-		$this->assertStringContainsString( 'class="whim-promo-slot"', $output );
+		$this->assertStringContainsString( 'class="whim-bogo-slot"', $output );
 	}
 
 	/**
@@ -157,7 +157,7 @@ class Render_Test extends Promo_TestCase {
 
 		$output = $this->capture_hook( Meta_Box::default_hook() );
 
-		$this->assertStringContainsString( 'whim-promo--style-prime-time', $output );
+		$this->assertStringContainsString( 'whim-bogo--style-prime-time', $output );
 		$this->assertStringContainsString( 'data-whim-style="prime-time"', $output );
 	}
 
@@ -170,7 +170,7 @@ class Render_Test extends Promo_TestCase {
 
 		$output = $this->capture_hook( Meta_Box::default_hook() );
 
-		$this->assertStringContainsString( 'whim-promo--style-basic-1', $output );
+		$this->assertStringContainsString( 'whim-bogo--style-basic-1', $output );
 		$this->assertStringNotContainsString( 'nope-not-a-style', $output );
 	}
 
@@ -214,7 +214,7 @@ class Render_Test extends Promo_TestCase {
 		$this->go_to_singular();
 
 		$this->assertStringContainsString(
-			'id="whim-promo-' . $promo_id . '"',
+			'id="whim-bogo-' . $promo_id . '"',
 			$this->capture_hook( Meta_Box::default_hook() )
 		);
 	}
@@ -324,8 +324,8 @@ class Render_Test extends Promo_TestCase {
 
 		$output = $this->capture_hook( 'my_hook' );
 
-		$this->assertSame( 1, substr_count( $output, 'whim-promo-slot' ) );
-		$this->assertSame( 2, substr_count( $output, 'class="whim-promo ' ) );
+		$this->assertSame( 1, substr_count( $output, 'whim-bogo-slot' ) );
+		$this->assertSame( 2, substr_count( $output, 'class="whim-bogo ' ) );
 		$this->assertSame( 2, substr_count( $output, ' hidden>' ) );
 	}
 
@@ -346,7 +346,7 @@ class Render_Test extends Promo_TestCase {
 
 		$output = $this->capture_hook( 'my_hook' ) . $this->capture_hook( 'my_hook' );
 
-		$this->assertSame( 1, substr_count( $output, 'whim-promo-slot' ) );
+		$this->assertSame( 1, substr_count( $output, 'whim-bogo-slot' ) );
 	}
 
 	/**
@@ -358,8 +358,8 @@ class Render_Test extends Promo_TestCase {
 
 		$this->go_to_singular();
 
-		$this->assertStringContainsString( 'whim-promo-slot', $this->capture_hook( 'hook_one' ) );
-		$this->assertStringContainsString( 'whim-promo-slot', $this->capture_hook( 'hook_two' ) );
+		$this->assertStringContainsString( 'whim-bogo-slot', $this->capture_hook( 'hook_one' ) );
+		$this->assertStringContainsString( 'whim-bogo-slot', $this->capture_hook( 'hook_two' ) );
 	}
 
 	/**
@@ -560,12 +560,12 @@ class Render_Test extends Promo_TestCase {
 
 		$footer = $this->capture_hook( 'wp_footer' );
 
-		$this->assertStringContainsString( 'whim-promo-exit', $footer );
+		$this->assertStringContainsString( 'whim-bogo-exit', $footer );
 		$this->assertStringContainsString( 'data-whim-placement="exit_intent"', $footer );
 		$this->assertStringContainsString( 'data-whim-presentation="modal"', $footer );
 		$this->assertStringContainsString( 'data-whim-days="30"', $footer );
-		$this->assertStringContainsString( 'whim-promo__close', $footer );
-		$this->assertStringContainsString( 'whim-promo__backdrop', $footer );
+		$this->assertStringContainsString( 'whim-bogo__close', $footer );
+		$this->assertStringContainsString( 'whim-bogo__backdrop', $footer );
 		$this->assertStringContainsString( 'role="dialog"', $footer );
 
 		// The dialog takes focus itself, so it has to be reachable programmatically.
@@ -574,10 +574,29 @@ class Render_Test extends Promo_TestCase {
 		// Dismiss comes after the body, so the first Tab out of the dialog reaches the
 		// promo's own controls rather than the × button.
 		$this->assertGreaterThan(
-			(int) strpos( $footer, 'whim-promo__body' ),
-			(int) strpos( $footer, 'whim-promo__close' ),
+			(int) strpos( $footer, 'whim-bogo__body' ),
+			(int) strpos( $footer, 'whim-bogo__close' ),
 			'The close button must come after the body in the markup.'
 		);
+	}
+
+	/**
+	 * The mobile end-of-content trigger is opt-in, and travels as an attribute so the
+	 * decision stays out of the cached HTML's variability.
+	 */
+	public function test_mobile_end_trigger_is_opt_in(): void {
+		$this->setExpectedDeprecated( 'the_block_template_skip_link' );
+
+		$promo_id = $this->create_promo( [ 'whim_placement' => Post_Type::PLACEMENT_EXIT ] );
+
+		$this->go_to_singular();
+
+		$this->assertStringNotContainsString( 'data-whim-mobile-end', $this->capture_hook( 'wp_footer' ) );
+
+		update_post_meta( $promo_id, 'whim_mobile_end', true );
+		Render::get_instance()->collect();
+
+		$this->assertStringContainsString( 'data-whim-mobile-end="1"', $this->capture_hook( 'wp_footer' ) );
 	}
 
 	/**
@@ -597,8 +616,8 @@ class Render_Test extends Promo_TestCase {
 
 		$footer = $this->capture_hook( 'wp_footer' );
 
-		$this->assertStringContainsString( 'whim-promo--slide-up', $footer );
-		$this->assertStringNotContainsString( 'whim-promo__backdrop', $footer );
+		$this->assertStringContainsString( 'whim-bogo--slide-up', $footer );
+		$this->assertStringNotContainsString( 'whim-bogo__backdrop', $footer );
 	}
 
 	/**

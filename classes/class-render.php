@@ -302,7 +302,7 @@ class Render {
 
 		$this->printed[ $group ] = true;
 
-		$markup = sprintf( '<div class="whim-promo-slot" data-whim-group="%s">', esc_attr( $group ) );
+		$markup = sprintf( '<div class="whim-bogo-slot" data-whim-group="%s">', esc_attr( $group ) );
 
 		foreach ( $promos as $promo ) {
 			$markup .= $this->promo_markup( $promo, Post_Type::PLACEMENT_INLINE, $group );
@@ -334,7 +334,7 @@ class Render {
 
 		$this->printed[ $group ] = true;
 
-		$markup = sprintf( '<div class="whim-promo-exit" data-whim-group="%s">', esc_attr( $group ) );
+		$markup = sprintf( '<div class="whim-bogo-exit" data-whim-group="%s">', esc_attr( $group ) );
 
 		foreach ( $this->exit_intent as $promo ) {
 			$markup .= $this->promo_markup( $promo, Post_Type::PLACEMENT_EXIT, $group );
@@ -346,7 +346,7 @@ class Render {
 	/**
 	 * The promo's front-end identity.
 	 *
-	 * Used for the frequency cookie, the analytics `promo_id`, and the
+	 * Used for the frequency cookie, the analytics `bogo_id`, and the
 	 * `?whim_preview=` target, so the editor screen has to be able to name the same
 	 * value the markup carries.
 	 *
@@ -378,14 +378,14 @@ class Render {
 		$slug         = self::promo_slug( $promo );
 
 		$classes = [
-			'whim-promo',
-			'whim-promo--' . str_replace( '_', '-', $placement ),
-			'whim-promo--preset-' . $preset,
-			'whim-promo--style-' . $style_preset,
+			'whim-bogo',
+			'whim-bogo--' . str_replace( '_', '-', $placement ),
+			'whim-bogo--preset-' . $preset,
+			'whim-bogo--style-' . $style_preset,
 		];
 
 		if ( $is_exit ) {
-			$classes[] = 'whim-promo--' . $presentation;
+			$classes[] = 'whim-bogo--' . $presentation;
 		}
 
 		/**
@@ -419,6 +419,10 @@ class Render {
 			// An exit promo may never open, so its stylesheet is not enqueued. The script
 			// fetches this once the promo is armed — see Assets::enqueue().
 			$attributes['data-whim-css'] = CSS_Route::url( $post_id );
+
+			if ( Meta_Box::get_value( $post_id, 'whim_mobile_end' ) ) {
+				$attributes['data-whim-mobile-end'] = '1';
+			}
 		}
 
 		$style = $this->style_attribute( $post_id );
@@ -436,7 +440,7 @@ class Render {
 		$markup .= ' hidden>';
 
 		if ( $is_exit && 'modal' === $presentation ) {
-			$markup .= '<div class="whim-promo__backdrop" data-whim-close="1"></div>';
+			$markup .= '<div class="whim-bogo__backdrop" data-whim-close="1"></div>';
 		}
 
 		$dialog_attributes = '';
@@ -452,15 +456,15 @@ class Render {
 			}
 		}
 
-		$markup .= sprintf( '<div class="whim-promo__card"%s>', $dialog_attributes );
-		$markup .= '<div class="whim-promo__body">' . $this->render_body( $promo ) . '</div>';
+		$markup .= sprintf( '<div class="whim-bogo__card"%s>', $dialog_attributes );
+		$markup .= '<div class="whim-bogo__body">' . $this->render_body( $promo ) . '</div>';
 
 		// Last in the card, though it sits top-right: dismiss is the last thing a
 		// reader wants, so it should also be the last thing Tab offers. Styles position
 		// it absolutely and none of them select it structurally.
 		if ( $is_exit ) {
 			$markup .= sprintf(
-				'<button type="button" class="whim-promo__close" data-whim-close="1" aria-label="%s">&times;</button>',
+				'<button type="button" class="whim-bogo__close" data-whim-close="1" aria-label="%s">&times;</button>',
 				esc_attr__( 'Dismiss', 'whimsical-promo' )
 			);
 		}

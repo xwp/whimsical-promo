@@ -105,11 +105,11 @@ class Assets_Test extends Promo_TestCase {
 
 		$served = Styles::css_for( $promo_id );
 
-		$this->assertStringContainsString( '#whim-promo-' . $promo_id . ' .whim-promo__card', $served );
+		$this->assertStringContainsString( '#whim-bogo-' . $promo_id . ' .whim-bogo__card', $served );
 		$this->assertStringContainsString( 'whim-kf-' . $promo_id . '-bloom', $served );
 
 		// The placeholder never reaches the page.
-		$this->assertStringNotContainsString( '#whim-promo .', $served );
+		$this->assertStringNotContainsString( '#whim-bogo .', $served );
 		$this->assertStringNotContainsString( ' whim-kf-bloom', $served );
 	}
 
@@ -120,7 +120,7 @@ class Assets_Test extends Promo_TestCase {
 		$promo_id = $this->create_promo(
 			[
 				'whim_style_preset' => 'prime-time',
-				Styles::META        => '#whim-promo .whim-promo__card { outline: 3px dotted red; }',
+				Styles::META        => '#whim-bogo .whim-bogo__card { outline: 3px dotted red; }',
 			]
 		);
 
@@ -130,7 +130,7 @@ class Assets_Test extends Promo_TestCase {
 
 		$served = Styles::css_for( $promo_id );
 
-		$this->assertStringContainsString( '#whim-promo-' . $promo_id . ' .whim-promo__card { outline: 3px dotted red; }', $served );
+		$this->assertStringContainsString( '#whim-bogo-' . $promo_id . ' .whim-bogo__card { outline: 3px dotted red; }', $served );
 		$this->assertStringNotContainsString( 'on-air light', $served );
 	}
 
@@ -149,8 +149,8 @@ class Assets_Test extends Promo_TestCase {
 		$this->assertTrue( wp_style_is( Assets::style_handle( $first ), 'enqueued' ) );
 		$this->assertTrue( wp_style_is( Assets::style_handle( $second ), 'enqueued' ) );
 
-		$this->assertStringContainsString( '#whim-promo-' . $first . ' ', Styles::css_for( $first ) );
-		$this->assertStringContainsString( '#whim-promo-' . $second . ' ', Styles::css_for( $second ) );
+		$this->assertStringContainsString( '#whim-bogo-' . $first . ' ', Styles::css_for( $first ) );
+		$this->assertStringContainsString( '#whim-bogo-' . $second . ' ', Styles::css_for( $second ) );
 	}
 
 	/**

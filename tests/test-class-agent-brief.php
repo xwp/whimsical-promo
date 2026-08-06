@@ -25,16 +25,16 @@ class Agent_Brief_Test extends Promo_TestCase {
 		$promo_id = $this->create_promo();
 		$brief    = Agent_Brief::text( $promo_id );
 
-		$this->assertStringContainsString( '#whim-promo-' . Styles::ID_PLACEHOLDER, $brief );
+		$this->assertStringContainsString( '#whim-bogo-' . Styles::ID_PLACEHOLDER, $brief );
 		$this->assertStringContainsString( 'whim-kf-' . Styles::ID_PLACEHOLDER . '-', $brief );
 
 		// No concrete id in either position. Not a bare digit check: a test post id like
 		// 26 collides with values such as `26px` in the worked example.
-		$this->assertDoesNotMatchRegularExpression( '/#whim-promo-\d/', $brief );
+		$this->assertDoesNotMatchRegularExpression( '/#whim-bogo-\d/', $brief );
 		$this->assertDoesNotMatchRegularExpression( '/\bwhim-kf-\d/', $brief );
 
-		// A bare `#whim-promo` would still scope, but it teaches the wrong shape.
-		$this->assertDoesNotMatchRegularExpression( '/#whim-promo(?![\w-])/', $brief );
+		// A bare `#whim-bogo` would still scope, but it teaches the wrong shape.
+		$this->assertDoesNotMatchRegularExpression( '/#whim-bogo(?![\w-])/', $brief );
 	}
 
 	/**
@@ -44,7 +44,7 @@ class Agent_Brief_Test extends Promo_TestCase {
 	public function test_brief_describes_the_whole_markup_contract(): void {
 		$brief = Agent_Brief::text( $this->create_promo() );
 
-		foreach ( [ 'whim-promo-slot', 'whim-promo__card', 'whim-promo__body', 'whim-promo__close', 'whim-promo__backdrop' ] as $part ) {
+		foreach ( [ 'whim-bogo-slot', 'whim-bogo__card', 'whim-bogo__body', 'whim-bogo__close', 'whim-bogo__backdrop' ] as $part ) {
 			$this->assertStringContainsString( $part, $brief, $part . ' is missing from the brief.' );
 		}
 
@@ -61,15 +61,15 @@ class Agent_Brief_Test extends Promo_TestCase {
 		$brief   = Agent_Brief::text( $this->create_promo() );
 		$choices = Post_Type::choices();
 
-		$this->assertStringContainsString( 'whim-promo--inline-hook', $brief );
-		$this->assertStringContainsString( 'whim-promo--exit-intent', $brief );
+		$this->assertStringContainsString( 'whim-bogo--inline-hook', $brief );
+		$this->assertStringContainsString( 'whim-bogo--exit-intent', $brief );
 
 		foreach ( $choices['whim_presentation'] as $presentation ) {
-			$this->assertStringContainsString( 'whim-promo--' . $presentation, $brief, $presentation . ' is missing.' );
+			$this->assertStringContainsString( 'whim-bogo--' . $presentation, $brief, $presentation . ' is missing.' );
 		}
 
 		foreach ( $choices['whim_animation'] as $preset ) {
-			$this->assertStringContainsString( 'whim-promo--preset-' . $preset, $brief, $preset . ' is missing.' );
+			$this->assertStringContainsString( 'whim-bogo--preset-' . $preset, $brief, $preset . ' is missing.' );
 		}
 	}
 

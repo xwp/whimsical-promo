@@ -7,7 +7,7 @@
  * selected style's template file. Either way it goes through the same scoping pass,
  * so both paths behave identically and there is only one thing to debug.
  *
- * Scoping is what makes the layering work. `#whim-promo-412 …` is 1-0-0, so a style
+ * Scoping is what makes the layering work. `#whim-bogo-412 …` is 1-0-0, so a style
  * always outranks promo-base.css (0-2-0 at most) without `!important`, and the
  * inline `style` attribute the Style token fields produce still outranks the style.
  * Weakest to strongest: base, style CSS, token fields.
@@ -83,7 +83,7 @@ class Styles {
 		 *         return $styles;
 		 *     } );
 		 *
-		 * The template must scope its selectors to `#whim-promo` and name every
+		 * The template must scope its selectors to `#whim-bogo` and name every
 		 * `@keyframes` with a `whim-kf-` prefix — see assets/styles/basic-1.css.
 		 *
 		 * @since 1.0.0
@@ -213,7 +213,7 @@ class Styles {
 	 * @return string
 	 */
 	public static function wrapper_id( int $post_id ): string {
-		return 'whim-promo-' . $post_id;
+		return 'whim-bogo-' . $post_id;
 	}
 
 	/**
@@ -257,8 +257,8 @@ class Styles {
 	/**
 	 * Rewrites a template's placeholders for one specific promo.
 	 *
-	 * `#whim-promo-ID` becomes `#whim-promo-<id>`, and `whim-kf-ID-` gains the same id.
-	 * A bare `#whim-promo` / `whim-kf-` and an already-rewritten id both match too, so
+	 * `#whim-bogo-ID` becomes `#whim-bogo-<id>`, and `whim-kf-ID-` gains the same id.
+	 * A bare `#whim-bogo` / `whim-kf-` and an already-rewritten id both match too, so
 	 * running this twice — or on CSS copied out of one promo and into another — lands on
 	 * the current promo rather than compounding.
 	 *
@@ -273,7 +273,7 @@ class Styles {
 		}
 
 		$css = preg_replace(
-			'/#whim-promo(?:-(?:\d+|' . self::ID_PLACEHOLDER . '))?(?![\w-])/i',
+			'/#whim-bogo(?:-(?:\d+|' . self::ID_PLACEHOLDER . '))?(?![\w-])/i',
 			'#' . self::wrapper_id( $post_id ),
 			$css
 		);
@@ -303,8 +303,8 @@ class Styles {
 		}
 
 		$css = preg_replace(
-			'/#whim-promo(?:-(?:\d+|' . self::ID_PLACEHOLDER . '))?(?![\w-])/i',
-			'#whim-promo-' . self::ID_PLACEHOLDER,
+			'/#whim-bogo(?:-(?:\d+|' . self::ID_PLACEHOLDER . '))?(?![\w-])/i',
+			'#whim-bogo-' . self::ID_PLACEHOLDER,
 			$css
 		);
 
@@ -330,7 +330,7 @@ class Styles {
 	/**
 	 * Confines every top-level selector to the promo's own wrapper.
 	 *
-	 * A selector that does not already start at `#whim-promo-<id>` is prefixed with it,
+	 * A selector that does not already start at `#whim-bogo-<id>` is prefixed with it,
 	 * so CSS written as `p { font-weight: bold }` styles paragraphs inside the card
 	 * instead of every paragraph on the page. Run after scope(), which is what makes the
 	 * id concrete enough to compare against.
@@ -458,7 +458,7 @@ class Styles {
 				continue;
 			}
 
-			// Exact, not a prefix match: a hand-written `#whim-promo-999` is a foreign id
+			// Exact, not a prefix match: a hand-written `#whim-bogo-999` is a foreign id
 			// and has to be confined like anything else.
 			$scoped = 1 === preg_match( '/^' . preg_quote( $scope, '/' ) . '(?![\w-])/', $selector );
 

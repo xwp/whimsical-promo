@@ -14,8 +14,8 @@
 ( function () {
 	'use strict';
 
-	var cfg = window.whimPromoCfg || { tracking: false, delivery: 'datalayer' };
-	var EVENT_NAME = 'whimsical_promo';
+	var cfg = window.whimBogoCfg || { tracking: false, delivery: 'datalayer' };
+	var EVENT_NAME = 'whimsical_bogo';
 	var COOKIE_PREFIX = 'whim_seen_';
 	var EXIT_MIN_DWELL = 5000;
 	var EXIT_DEBOUNCE = 300;
@@ -25,6 +25,18 @@
 
 	// Symmetric -50% collapses the root box to the viewport's centre line.
 	var MIDLINE_MARGIN = '-50% 0px -50% 0px';
+
+	// Where the reading line sits, as a fraction of the viewport height. The last tenth
+	// is left over deliberately: a line pinned to the very bottom edge is only crossed
+	// on a page that can scroll past the end of its article, and a page whose article
+	// runs to the final pixel never can.
+	var END_LINE_RATIO = 0.9;
+
+	// How long to let a resize settle before the reading line is measured again.
+	var RESIZE_SETTLE = 150;
+
+	// Used when the page ships no list of its own — see Settings::DEFAULT_CONTENT_SELECTORS.
+	var CONTENT_SELECTORS = [ '.entry-content', '.post-content', 'article', 'main' ];
 
 	// How long to wait for an on-demand stylesheet before showing the promo anyway.
 	var CSS_TIMEOUT = 1500;
@@ -138,13 +150,13 @@
 		}
 
 		var params = {
-			promo_id: attr( promo, 'slug' ),
-			promo_placement: attr( promo, 'placement' ),
-			promo_action: action
+			bogo_id: attr( promo, 'slug' ),
+			bogo_placement: attr( promo, 'placement' ),
+			bogo_action: action
 		};
 
 		if ( target ) {
-			params.promo_target = String( target );
+			params.bogo_target = String( target );
 		}
 
 		if ( 'gtag' === cfg.delivery ) {
@@ -175,7 +187,7 @@
 	 * @return {Element|null} Winning promo, or null when every promo is spent.
 	 */
 	function chainWinner( container ) {
-		var promos = container.querySelectorAll( '.whim-promo' );
+		var promos = container.querySelectorAll( '.whim-bogo' );
 		var i;
 
 		// A promo named in the URL wins outright, wherever it sits in the chain —
@@ -384,7 +396,10 @@
 		var pointerQuery = window.matchMedia && window.matchMedia( '(hover: hover) and (pointer: fine)' );
 
 		if ( ! pointerQuery || ! pointerQuery.matches ) {
-			// Touch and coarse-pointer devices have no exit intent to detect.
+			// Touch and coarse-pointer devices have no exit intent to detect, so the end
+			// of the article stands in for the gesture when the editor asked for it.
+			armContentEnd( winner );
+
 			return;
 		}
 
@@ -424,6 +439,150 @@
 		root.addEventListener( 'mouseleave', onLeave );
 	}
 
+	/* ------------------------------------------------------- end of content */
+
+	/**
+	 * The element whose end counts as "finished reading", first match wins.
+	 *
+	 * @return {Element|null} Content element, or null when the page has none of them.
+	 */
+	function contentElement() {
+		var selectors = cfg.contentSelectors && cfg.contentSelectors.length
+			? cfg.contentSelectors
+			: CONTENT_SELECTORS;
+
+		for ( var i = 0; i < selectors.length; i++ ) {
+			var found = null;
+
+			try {
+				// One at a time: a comma-joined list returns whichever match comes first
+				// in the document, not the first selector the site listed.
+				found = document.querySelector( selectors[ i ] );
+			} catch ( e ) {
+				// One unusable selector in the setting is not a reason to give up on the rest.
+			}
+
+			if ( found ) {
+				return found;
+			}
+		}
+
+		return null;
+	}
+
+	/** Distance from the top of the viewport to the reading line, in pixels. */
+	function readingLine() {
+		return Math.round( window.innerHeight * END_LINE_RATIO );
+	}
+
+	/**
+	 * Calls back once the end of an element has scrolled up past the reading line near
+	 * the bottom of the viewport.
+	 *
+	 * The root box is collapsed onto that line, so each entry carries the element's own
+	 * bottom measured against it. No sentinel element has to be injected at the end of
+	 * the article, and no scroll handler runs.
+	 *
+	 * The margin is in pixels, not a percentage: engines disagree over which axis a
+	 * percentage rootMargin resolves against, and this line has to be a fraction of the
+	 * height on a phone specifically. Pixels do mean the line has to be measured again
+	 * when the viewport changes, so the observer is rebuilt after a resize or a rotation.
+	 *
+	 * @param {Element}  target   Element to watch.
+	 * @param {Function} callback Called once, then the observer disconnects.
+	 */
+	function observeEndOnce( target, callback ) {
+		var observer = null;
+		var settle = null;
+		var done = false;
+
+		function onChange( entries ) {
+			var entry = entries[ entries.length - 1 ];
+
+			// rootBounds is null in some cross-origin framing cases, where the margin
+			// cannot be read back — the line we asked for is the closest honest stand-in.
+			var line = entry.rootBounds ? entry.rootBounds.bottom : readingLine();
+
+			if ( done || entry.boundingClientRect.bottom > line ) {
+				return;
+			}
+
+			done = true;
+			observer.disconnect();
+			window.removeEventListener( 'resize', onResize );
+			callback();
+		}
+
+		function connect() {
+			var line = readingLine();
+
+			if ( observer ) {
+				observer.disconnect();
+			}
+
+			// Top edge pulled down to the line, bottom edge pulled up to meet it.
+			observer = new IntersectionObserver( onChange, {
+				rootMargin: -line + 'px 0px ' + ( line - window.innerHeight ) + 'px 0px'
+			} );
+
+			observer.observe( target );
+		}
+
+		function onResize() {
+			window.clearTimeout( settle );
+			settle = window.setTimeout( function () {
+				if ( ! done ) {
+					connect();
+				}
+			}, RESIZE_SETTLE );
+		}
+
+		window.addEventListener( 'resize', onResize );
+		connect();
+	}
+
+	/** Runs a callback once the page has been open as long as exit intent waits out. */
+	function afterDwell( callback ) {
+		var waited = new Date().getTime() - pageLoadedAt;
+
+		if ( waited >= EXIT_MIN_DWELL ) {
+			callback();
+			return;
+		}
+
+		window.setTimeout( callback, EXIT_MIN_DWELL - waited );
+	}
+
+	/**
+	 * Mobile stand-in for the cursor gesture: the promo opens once the reader reaches
+	 * the end of the article.
+	 *
+	 * @param {Element} promo Winning exit promo.
+	 */
+	function armContentEnd( promo ) {
+		if ( '1' !== attr( promo, 'mobile-end' ) || ! ( 'IntersectionObserver' in window ) ) {
+			return;
+		}
+
+		var content = contentElement();
+
+		if ( ! content ) {
+			return;
+		}
+
+		// Same reasoning as the desktop arming: fetch the design while the reader is
+		// still reading, not at the moment the card has to appear.
+		ensureCss( promo );
+
+		observeEndOnce( content, function () {
+			afterDwell( function () {
+				ensureCss( promo, function () {
+					showExit( promo );
+				} );
+			} );
+		} );
+	}
+
 	/**
 	 * Where a modal should put focus on open: the dialog itself, which the close
 	 * button used to take. Focusing a control would arm Enter on it the instant the
@@ -432,8 +591,8 @@
 	 * the card so Tab never offers it first.
 	 */
 	function focusTarget( promo ) {
-		return promo.querySelector( '.whim-promo__card' ) ||
-			promo.querySelector( '.whim-promo__close' );
+		return promo.querySelector( '.whim-bogo__card' ) ||
+			promo.querySelector( '.whim-bogo__close' );
 	}
 
 	var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -485,7 +644,7 @@
 	}
 
 	function onKeydown( event ) {
-		var open = document.querySelector( '.whim-promo--exit-intent.is-revealed' );
+		var open = document.querySelector( '.whim-bogo--exit-intent.is-revealed' );
 
 		if ( ! open ) {
 			return;
@@ -534,7 +693,7 @@
 			return;
 		}
 
-		var promo = target.closest( '.whim-promo' );
+		var promo = target.closest( '.whim-bogo' );
 
 		if ( ! promo ) {
 			return;
@@ -563,7 +722,7 @@
 			return;
 		}
 
-		var promo = form.closest( '.whim-promo' );
+		var promo = form.closest( '.whim-bogo' );
 
 		if ( ! promo ) {
 			return;
@@ -576,13 +735,13 @@
 	/* ------------------------------------------------------------------ init */
 
 	function init() {
-		var slots = document.querySelectorAll( '.whim-promo-slot' );
+		var slots = document.querySelectorAll( '.whim-bogo-slot' );
 
 		for ( var i = 0; i < slots.length; i++ ) {
 			setupInlineSlot( slots[ i ] );
 		}
 
-		var exits = document.querySelectorAll( '.whim-promo-exit' );
+		var exits = document.querySelectorAll( '.whim-bogo-exit' );
 
 		for ( var j = 0; j < exits.length; j++ ) {
 			setupExitIntent( exits[ j ] );

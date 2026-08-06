@@ -100,6 +100,13 @@ class Post_Type {
 	const STYLE_TOKENS = [ 'bg', 'accent', 'border', 'text', 'shadow', 'radius' ];
 
 	/**
+	 * Meta keys backed by a checkbox.
+	 *
+	 * @var string[]
+	 */
+	const BOOLEAN_META = [ 'whim_show_until_interacted', 'whim_mobile_end' ];
+
+	/**
 	 * Hooks.
 	 *
 	 * @return void
@@ -138,6 +145,7 @@ class Post_Type {
 			'whim_show_until_interacted' => true,
 			'whim_cookie_days'           => self::DEFAULT_DAYS_INLINE,
 			'whim_presentation'          => 'slide-down',
+			'whim_mobile_end'            => false,
 			'whim_animation'             => 'slide-up-spring',
 			'whim_style_preset'          => Styles::default_slug(),
 			Styles::META                 => '',
@@ -214,7 +222,7 @@ class Post_Type {
 						'items' => [ 'type' => 'string' ],
 					],
 				];
-			} elseif ( 'whim_show_until_interacted' === $key ) {
+			} elseif ( in_array( $key, self::BOOLEAN_META, true ) ) {
 				$args['type'] = 'boolean';
 			} elseif ( 'whim_cookie_days' === $key ) {
 				$args['type'] = 'integer';
@@ -255,7 +263,7 @@ class Post_Type {
 			return self::sanitize_post_types( $value );
 		}
 
-		if ( 'whim_show_until_interacted' === $key ) {
+		if ( in_array( $key, self::BOOLEAN_META, true ) ) {
 			return (bool) $value;
 		}
 

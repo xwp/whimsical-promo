@@ -5,7 +5,7 @@
  * reveals and dismisses, the close button's hit area, and the focus ring. It sets
  * no colour, no type, no radius, no ornament — that is a style's job.
  *
- * A style's CSS is scoped to `#whim-promo-<id>`, so it outranks everything here by
+ * A style's CSS is scoped to `#whim-bogo-<id>`, so it outranks everything here by
  * construction (1-0-0 beats 0-2-0). Nothing in this file needs to mirror a style's
  * specificity, and a style never needs `!important` to win. That is the whole point
  * of the split: see Styles::scope().
@@ -13,29 +13,29 @@
  * Two rules hold the reveal together and belong here rather than in a style, because
  * a style that forgot them would leave promos permanently invisible:
  *
- *   .whim-promo .whim-promo__card       { opacity: 0 }
- *   .whim-promo.is-revealed …__card     { opacity: 1 }
+ *   .whim-bogo .whim-bogo__card       { opacity: 0 }
+ *   .whim-bogo.is-revealed …__card     { opacity: 1 }
  *
  * Styles add transforms on top of that; they do not have to restate the fade.
  */
 
-.whim-promo-slot {
+.whim-bogo-slot {
 	display: block;
 }
 
-.whim-promo {
+.whim-bogo {
 	/* Above the theme's bottom adhesion ad (z-index 2147483637), which would
 	   otherwise punch through an exit-intent modal's backdrop. */
 	--whim-z: 2147483638;
 }
 
-.whim-promo[hidden] {
+.whim-bogo[hidden] {
 	display: none;
 }
 
 /* ---------------------------------------------------------------------- card */
 
-.whim-promo .whim-promo__card {
+.whim-bogo .whim-bogo__card {
 	/* inline-size containment means the card cannot size to its own contents, so
 	   the width has to come from outside — required for the container queries a
 	   style may use, and for not collapsing as a flex item in the modal. */
@@ -46,40 +46,40 @@
 	position: relative;
 }
 
-.whim-promo .whim-promo__body {
+.whim-bogo .whim-bogo__body {
 	position: relative;
 }
 
 /* -------------------------------------------------------------- reveal gate */
 
-.whim-promo .whim-promo__card {
+.whim-bogo .whim-bogo__card {
 	opacity: 0;
 	transition: opacity var(--whim-duration, 520ms) var(--whim-ease, ease);
 }
 
-.whim-promo.is-revealed .whim-promo__card {
+.whim-bogo.is-revealed .whim-bogo__card {
 	opacity: 1;
 }
 
 /* -------------------------------------------------------------- exit intent */
 
-.whim-promo--exit-intent {
+.whim-bogo--exit-intent {
 	inset-block-end: 0;
 	inset-inline: 0;
 	position: fixed;
 	z-index: var(--whim-z);
 }
 
-.whim-promo--slide-down {
+.whim-bogo--slide-down {
 	inset-block: 0 auto;
 }
 
-.whim-promo--slide-up {
+.whim-bogo--slide-up {
 	/* Clear the theme's bottom ad rail when it reserves space. */
 	inset-block-end: var(--bottom-ad-container-height, 0px);
 }
 
-.whim-promo--modal {
+.whim-bogo--modal {
 	align-items: center;
 	display: none;
 	inset: 0;
@@ -87,11 +87,11 @@
 	padding: clamp(0.75rem, 4vw, 1.5rem);
 }
 
-.whim-promo--modal:not([hidden]) {
+.whim-bogo--modal:not([hidden]) {
 	display: flex;
 }
 
-.whim-promo--modal .whim-promo__card {
+.whim-bogo--modal .whim-bogo__card {
 	margin: 0;
 	max-block-size: calc(100dvh - 3rem);
 	overflow-y: auto;
@@ -100,7 +100,7 @@
 }
 
 /* A neutral scrim so no style can ship a modal without one. Styles restyle it. */
-.whim-promo__backdrop {
+.whim-bogo__backdrop {
 	background: rgba(14, 14, 12, 0.6);
 	inset: 0;
 	opacity: 0;
@@ -108,7 +108,7 @@
 	transition: opacity var(--whim-duration, 520ms) var(--whim-ease, ease);
 }
 
-.whim-promo--modal.is-revealed .whim-promo__backdrop {
+.whim-bogo--modal.is-revealed .whim-bogo__backdrop {
 	opacity: 1;
 }
 
@@ -119,7 +119,7 @@ body.whim-has-modal {
 /* ------------------------------------------------------------ close control */
 
 /* Position and hit area only — 44×44 is an accessibility floor, not a look. */
-.whim-promo .whim-promo__close {
+.whim-bogo .whim-bogo__close {
 	appearance: none;
 	block-size: 2.75rem;
 	border: 0;
@@ -140,7 +140,7 @@ body.whim-has-modal {
 /* ---------------------------------------------------------------- focus ring */
 
 /* A visible ring even if a style forgets one. */
-.whim-promo :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+.whim-bogo :is(a, button, input, select, textarea, [tabindex]):focus-visible {
 	outline: 2px solid currentcolor;
 	outline-offset: 3px;
 }
@@ -148,16 +148,16 @@ body.whim-has-modal {
 /* The card takes focus when a modal opens so Enter is not armed on a control the
    reader has not read yet. It is the dialog, not a control, and the role announces
    it — so no ring here; the ring belongs on whatever the first Tab reaches. */
-.whim-promo .whim-promo__card:focus,
-.whim-promo .whim-promo__card:focus-visible {
+.whim-bogo .whim-bogo__card:focus,
+.whim-bogo .whim-bogo__card:focus-visible {
 	outline: none;
 }
 
 /* ---------------------------------------------------------- reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
-	.whim-promo .whim-promo__card,
-	.whim-promo__backdrop {
+	.whim-bogo .whim-bogo__card,
+	.whim-bogo__backdrop {
 		transition-duration: 200ms;
 	}
 }

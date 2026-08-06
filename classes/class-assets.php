@@ -25,14 +25,14 @@ class Assets {
 	 *
 	 * @var string
 	 */
-	const HANDLE = 'whimsical-promo';
+	const HANDLE = 'whimsical-bogo';
 
 	/**
 	 * Asset version.
 	 *
 	 * @var string
 	 */
-	const VERSION = '1.5.0';
+	const VERSION = '1.6.0';
 
 	/**
 	 * Hooks.
@@ -90,7 +90,7 @@ class Assets {
 		// Plugin-level config, identical for every visitor — safe under page caching.
 		wp_add_inline_script(
 			self::HANDLE,
-			'window.whimPromoCfg = ' . wp_json_encode( Settings::js_config() ) . ';',
+			'window.whimBogoCfg = ' . wp_json_encode( Settings::js_config() ) . ';',
 			'before'
 		);
 	}

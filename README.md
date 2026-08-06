@@ -1,7 +1,8 @@
 # Whimsical Promo
 
 Editor-managed promo cards — newsletter sign-ups, app pitches, any CTA — rendered
-after the post body, at a theme hook of your choosing, or on desktop exit intent.
+after the post body, at a theme hook of your choosing, or on exit intent: the cursor
+leaving the window on desktop, and optionally the end of the article on a phone.
 Copy, design and targeting all live in the block editor, so changes ship without a
 deployment.
 
@@ -42,6 +43,38 @@ Without Composer, clone the repo into `wp-content/plugins/whimsical-promo/`.
 
 Requires PHP 8.1+.
 
+### Upgrading from 1.0
+
+1.1 renames what the plugin puts on the page, at the client's request, so that
+nothing in the rendered document reads as advertising:
+
+| 1.0                                               | 1.1                                            |
+| ------------------------------------------------- | ---------------------------------------------- |
+| `whim-promo`, `whim-promo__card`, `whim-promo--…` | `whim-bogo`, `whim-bogo__card`, `whim-bogo--…` |
+| `#whim-promo-<id>`                                | `#whim-bogo-<id>`                              |
+| `whimsical_promo` event, `promo_*` parameters     | `whimsical_bogo` event, `bogo_*` parameters    |
+| `window.whimPromoCfg`                             | `window.whimBogoCfg`                           |
+
+Nothing is rewritten for you, deliberately. Any **Custom CSS** stored on a promo, and
+any **theme CSS** targeting `.whim-promo…`, has to be updated by hand — search for
+`whim-promo` and replace with `whim-bogo`. A promo whose Custom CSS still uses the old
+prefix keeps rendering, but with `promo-base.css` and nothing else — Custom CSS replaces
+the selected style rather than adding to it, so once its selectors stop matching there is
+no design left underneath. The damage is obvious rather than silent, which is the point.
+(An automatic rewrite was tried and dropped: telling a
+selector from a value that merely contains the same word means parsing the CSS, and
+getting that wrong corrupts a working stylesheet — `url("#whim-promo-filter")` is a
+value, not a selector.)
+
+**Analytics is not migrated either** — rename the variables, trigger and parameters in
+GTM/GA4 to match. The `data-whim-*` attributes and the `whim_seen_<slug>` cookies are
+unchanged, so nobody's frequency capping resets.
+
+The plugin directory and its asset filenames still say `whimsical-promo`, since
+those are the repository's name. If the word has to disappear from request paths
+too, that is a repo rename and a Composer package rename — say so and it can be
+done as its own change.
+
 ## How a promo works
 
 1. Create **Promos → Add New**. The title is for the admin list only; the body is
@@ -73,6 +106,7 @@ them render, which is the usual reason a hand-off appears not to work.
 | **Stop showing once the visitor clicks or submits** | Sets a `whim_seen_<slug>` cookie, which hands off to the next promo in the chain on later visits. Inline promos set it on click or submit; exit-intent promos set it as soon as they open (see below). Unchecked = shows every visit, never hands off.                                                                                                                                   |
 | **Remember for (days)**                             | How long an interaction is remembered, counted from it. Only shown while the box above is ticked; emptying it or setting 0 unticks that box, which is how a promo becomes always-visible. Default 30.                                                                                                                                                                                    |
 | **Exit-intent presentation**                        | `slide-down`, `slide-up` or `modal` (only `modal` dims the page). Exit intent only.                                                                                                                                                                                                                                                                                                      |
+| **Also trigger on mobile…**                         | Opens the promo when the reader reaches the end of the article, since a phone has no cursor to leave the page. Exit intent only, off by default (see below).                                                                                                                                                                                                                             |
 | **Animation**                                       | `slide-up-spring`, `slide-down-spring`, `fade-rise` or `none`. The spring pair differ only in which way the card travels — pick the one that matches the edge it enters from. Readers who ask for reduced motion always get a plain crossfade.                                                                                                                                           |
 | **Style**                                           | The design this promo ships with (see below). Defaults to `basic-1`.                                                                                                                                                                                                                                                                                                                     |
 | **Custom CSS**                                      | This promo's CSS, replacing the style's own. Administrators only. Empty means the selected style ships as designed.                                                                                                                                                                                                                                                                      |
@@ -94,6 +128,40 @@ they filter rather than after it. Use `whim_after_content` instead of `the_conte
 Every other name is allowed, including one your theme has not fired yet. A hook that never
 fires renders nothing, and a name that turns out to be a filter is handed its value back
 untouched — so a typo can cost you the promo, never the page.
+
+### Reaching the end of the content, on mobile
+
+Exit intent is a cursor gesture, so it does not exist on a phone. Ticking **Also
+trigger on mobile when reaching the end of the content** gives an exit-intent promo
+a second way in: on any device that reports a coarse pointer, it opens once the end
+of the article has scrolled up near the bottom of the viewport. Desktop is untouched
+— the pointer check runs first, so a device only ever uses one of the two triggers.
+
+Which element counts as "the article" is a plugin-wide setting, **Promos →
+Settings → Content selectors**: a comma-separated list of CSS selectors tried in
+order, the first match on the page being the element watched. The default is
+
+    .entry-content, .post-content, article, main
+
+Point it at the article body rather than at the page. Reaching the end of a wrapper
+that also holds comments, related posts and the footer means the promo arrives long
+after the reader actually finished reading. If nothing on a page matches, the promo
+simply does not open there.
+
+The comma separates entries, so a selector containing one of its own —
+`:is(article, main)` — has to be written as two entries. A selector the browser
+cannot parse is skipped and the next one is tried.
+
+No element is injected into your markup and no scroll handler is bound: this is one
+`IntersectionObserver` whose root box is collapsed onto a line at 90% of the viewport
+height, so each callback carries the article's own bottom measured against that line.
+The last tenth is left over on purpose — a line pinned to the very bottom edge would
+only be crossed on a page that can scroll past the end of its article, and a page
+whose article runs to the final pixel never can. The margin is computed in pixels and
+re-measured after a resize or a rotation, rather than written as a percentage, because
+engines disagree over which axis a percentage `rootMargin` resolves against. The same
+five-second dwell as desktop exit intent applies, so a reader who lands mid-article and
+scrolls straight to the end is not ambushed on arrival.
 
 ### Writing a promo body
 
@@ -188,7 +256,7 @@ Weakest to strongest:
    promo sits, how it reveals and dismisses, the close button's 44×44 hit area,
    a fallback focus ring. No colour, no type, no radius.
 2. **The style's CSS**, served as its own stylesheet and scoped to
-   `#whim-promo-<id>` (the `ID` placeholder resolved to this promo).
+   `#whim-bogo-<id>` (the `ID` placeholder resolved to this promo).
 3. **Colour and shape overrides**, in the wrapper's `style` attribute.
 
 Layer 2 is an id selector (1-0-0), so it outranks the base (0-2-0 at most)
@@ -199,7 +267,7 @@ _by construction_. That is the point of the split: a style never needs
 
 A promo's CSS is a pure function of its post meta, so it is the same for every
 visitor and can be cached hard. Each promo gets its own stylesheet at
-`/?whim_promo_css=<id>&whim_ver=<hash>`, sent with
+`/?whim_bogo_css=<id>&whim_ver=<hash>`, sent with
 `Cache-Control: public, max-age=31536000, immutable`. The hash is a fingerprint of
 the CSS itself, so saving a promo changes the URL and nothing has to be purged.
 VIP's edge honours an application's own `Cache-Control` rather than replacing it,
@@ -237,7 +305,7 @@ caches. A query argument works the moment the plugin is active.
 Picking a style and saving nothing else is a complete choice — the template
 renders as designed. Fill in **Custom CSS** and it replaces the template
 entirely; **Load the selected style into the editor** copies the template in as a
-starting point, with a bare `#whim-promo` resolved to this promo's id. A template
+starting point, with a bare `#whim-bogo` resolved to this promo's id. A template
 written with the `ID` placeholder loads with the placeholder intact, and keyframe
 names are left as written either way — both are rewritten on output, so what you
 read in the field is not byte-for-byte what ships.
@@ -245,16 +313,16 @@ read in the field is not byte-for-byte what ships.
 So a new design can be generated elsewhere — Claude Design, an agent, by hand —
 and pasted in without a deploy. Four rules for anything pasted:
 
-- **Scope every selector to `#whim-promo-ID`.** `ID` is a literal placeholder,
+- **Scope every selector to `#whim-bogo-ID`.** `ID` is a literal placeholder,
   replaced with the promo's own post id on output — so one stylesheet can be pasted
   into any promo and scopes itself, and nothing has to be hand-edited when it moves.
-  A concrete `#whim-promo-412`, or a bare `#whim-promo`, is accepted and rewritten
+  A concrete `#whim-bogo-412`, or a bare `#whim-bogo`, is accepted and rewritten
   the same way.
 - **Name animations `whim-kf-ID-something`.** The same placeholder, rewritten the
   same way, so two promos can carry different edits of the same animation without
   one silently overwriting the other. `@keyframes` names are global otherwise.
-- **Wrap entry offsets in `:where()`.** `#whim-promo:where(.whim-promo--slide-down)
-.whim-promo__card` scores 1-1-0, so the `#whim-promo.is-revealed .whim-promo__card`
+- **Wrap entry offsets in `:where()`.** `#whim-bogo:where(.whim-bogo--slide-down)
+.whim-bogo__card` scores 1-1-0, so the `#whim-bogo.is-revealed .whim-bogo__card`
   reset at 1-2-0 always wins and the card settles. Written flat the two tie, source
   order decides, and a card that entered from off-screen stays there — visibly
   nothing rendered. Presentation offsets go after preset offsets so a bar still
@@ -268,7 +336,7 @@ and pasted in without a deploy. Four rules for anything pasted:
 
 The first rule is enforced, not just documented. Every top-level selector is
 confined to the promo's wrapper on the way out, so `p { font-weight: bold }` is
-served as `#whim-promo-412 p { font-weight: bold }` and styles paragraphs in the
+served as `#whim-bogo-412 p { font-weight: bold }` and styles paragraphs in the
 card rather than every paragraph on the page. A pasted stylesheet cannot reach the
 article, the header or another promo, however it is written.
 
@@ -290,7 +358,7 @@ accident, not a hostile administrator.
 
 **Create more designs using AI agents?** on the promo screen holds a
 copy-and-paste brief for exactly that. It carries everything an agent needs
-without access to this repository, written in the `#whim-promo-ID` placeholder form
+without access to this repository, written in the `#whim-bogo-ID` placeholder form
 so the result can be pasted into any promo: the markup skeleton it may not change,
 the placement / presentation / preset classes an editor can pick, the state
 classes, the `--whim-*` tokens the override fields write, the rules above, how
@@ -350,23 +418,23 @@ file to copy from. A style with a malformed slug or a missing file is dropped, a
 if a filter leaves nothing valid the bundled set comes back.
 
 The bundled templates predate the placeholder and are written against a bare
-`#whim-promo` with `whim-kf-` names. Both forms scope identically, so they were
-left alone — but write new ones as `#whim-promo-ID` and `whim-kf-ID-…`, which show
+`#whim-bogo` with `whim-kf-` names. Both forms scope identically, so they were
+left alone — but write new ones as `#whim-bogo-ID` and `whim-kf-ID-…`, which show
 the substitution instead of hiding it.
 
 #### On the wrapper
 
 ```html
 <div
-	id="whim-promo-412"
-	class="whim-promo whim-promo--inline-hook
-  whim-promo--preset-slide-up-spring whim-promo--style-prime-time"
+	id="whim-bogo-412"
+	class="whim-bogo whim-bogo--inline-hook
+  whim-bogo--preset-slide-up-spring whim-bogo--style-prime-time"
 	data-whim-style="prime-time"
 	…
 ></div>
 ```
 
-The id is what CSS hangs off. `data-whim-style` and `whim-promo--style-<slug>` are
+The id is what CSS hangs off. `data-whim-style` and `whim-bogo--style-<slug>` are
 there for theme-side and analytics selectors.
 
 ## Behaviour details worth knowing
@@ -386,6 +454,9 @@ there for theme-side and analytics selectors.
   was afterward. A modal traps Tab inside the dialog while it is open; bars and
   slide-ins do not. Modals are layered above the theme's bottom adhesion ad so
   the backdrop is never punctured.
+- **Everywhere else, the end of the article stands in for it** — but only for
+  promos that asked for it. The same dwell and the same cookie apply, so a promo
+  spent on a phone is spent everywhere.
 - **A modal opens focused on the dialog itself**, not on × and not on a control.
   Nothing is armed the instant it appears, and the first Tab reaches the promo's
   own call to action — × is last in the card, so Tab never offers it first. Only
@@ -414,29 +485,29 @@ there for theme-side and analytics selectors.
 a delivery mode — push to `dataLayer` (Google Tag Manager) or call `gtag()`
 directly. With tracking off, promos work exactly as before and emit nothing.
 
-Every interaction emits one event, `whimsical_promo`:
+Every interaction emits one event, `whimsical_bogo`:
 
 ```js
 window.dataLayer.push({
-	event: "whimsical_promo",
-	promo_id: "newsletter-inline", // the promo post slug
-	promo_placement: "inline_hook", // inline_hook | exit_intent
-	promo_action: "view", // view | click | submit | dismiss
-	promo_target: "/subscribe/", // link href or form id, on click/submit
+	event: "whimsical_bogo",
+	bogo_id: "newsletter-inline", // the promo post slug
+	bogo_placement: "inline_hook", // inline_hook | exit_intent
+	bogo_action: "view", // view | click | submit | dismiss
+	bogo_target: "/subscribe/", // link href or form id, on click/submit
 });
 ```
 
 In `gtag` mode the same payload goes to
-`gtag( 'event', 'whimsical_promo', { … } )`, and is skipped silently when no
+`gtag( 'event', 'whimsical_bogo', { … } )`, and is skipped silently when no
 `gtag` function exists. Consent gating stays where it belongs — in GTM.
 
 ### Google Tag Manager
 
-1. **Variables → New → Data Layer Variable**, once per field: `promo_id`,
-   `promo_placement`, `promo_action`, `promo_target`.
-2. **Triggers → New → Custom Event**, event name `whimsical_promo`, fire on all
+1. **Variables → New → Data Layer Variable**, once per field: `bogo_id`,
+   `bogo_placement`, `bogo_action`, `bogo_target`.
+2. **Triggers → New → Custom Event**, event name `whimsical_bogo`, fire on all
    custom events.
-3. **Tags → New → Google Analytics: GA4 Event**. Event name `whimsical_promo`;
+3. **Tags → New → Google Analytics: GA4 Event**. Event name `whimsical_bogo`;
    add the four variables as event parameters using the same names.
 4. Attach the trigger, use **Preview** to confirm the event and parameters arrive,
    then **Submit**.
@@ -444,9 +515,9 @@ In `gtag` mode the same payload goes to
 ### GA4
 
 1. **Admin → Custom definitions → Create custom dimension**, scope _Event_, one
-   per parameter: `promo_id`, `promo_placement`, `promo_action`, `promo_target`.
+   per parameter: `bogo_id`, `bogo_placement`, `bogo_action`, `bogo_target`.
 2. Custom dimensions only populate from their creation date onward.
-3. **Admin → Events**: mark `whimsical_promo` as a key event if promo submissions
+3. **Admin → Events**: mark `whimsical_bogo` as a key event if promo submissions
    count as conversions for you.
 4. Verify in **DebugView** (direct `gtag` mode) or GTM **Preview** (`dataLayer`
    mode).
@@ -483,8 +554,10 @@ They run against `tests/fixtures/promo-chain.html`, a static page shipped with t
 that loads `promo.js` straight from the plugin path with a cache-buster generated at
 runtime. It needs no database, no promo posts and no seeding, so the same tests work on
 any environment. They cover chain selection, the scroll entrance and its `view` event,
-click → cookie → hand-off, a preview writing neither cookie nor analytics, and the
-malformed-cookie regression.
+click → cookie → hand-off, a preview writing neither cookie nor analytics, the
+malformed-cookie regression, and — under touch emulation, so the coarse-pointer branch
+is the one actually exercised — the end-of-content trigger opening the promo that opted
+in and leaving the one that did not alone.
 
 The fixture is a hand-written copy of the skeleton `Render` emits, so it can drift.
 `tests/test-class-fixture-markup.php` is the guard: it fails when an attribute or

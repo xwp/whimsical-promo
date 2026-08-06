@@ -44,7 +44,7 @@ class CSS_Route_Test extends Promo_TestCase {
 		$promo_id = $this->create_promo( [ 'whim_style_preset' => 'prime-time' ] );
 		$before   = Styles::version( $promo_id );
 
-		update_post_meta( $promo_id, Styles::META, '#whim-promo-ID .whim-promo__card { color: red }' );
+		update_post_meta( $promo_id, Styles::META, '#whim-bogo-ID .whim-bogo__card { color: red }' );
 
 		$this->assertNotSame( $before, Styles::version( $promo_id ) );
 	}
@@ -68,8 +68,8 @@ class CSS_Route_Test extends Promo_TestCase {
 
 		$body = (string) CSS_Route::stylesheet( $promo_id );
 
-		$this->assertStringContainsString( '#whim-promo-' . $promo_id, $body );
-		$this->assertStringNotContainsString( '#whim-promo .', $body );
+		$this->assertStringContainsString( '#whim-bogo-' . $promo_id, $body );
+		$this->assertStringNotContainsString( '#whim-bogo .', $body );
 
 		// Minified on the way out, so none of the template's prose ships.
 		$this->assertStringNotContainsString( '/*', $body );

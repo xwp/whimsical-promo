@@ -6,7 +6,7 @@
  * ---------------------------------------------------------------------------
  * HOW A STYLE TEMPLATE WORKS
  *
- * `#whim-promo` is a placeholder. On output it becomes the promo's own id,
+ * `#whim-bogo` is a placeholder. On output it becomes the promo's own id,
  * so this file only ever styles the one promo it was loaded for — which also
  * means every selector here beats promo-base.css without `!important`.
  *
@@ -19,7 +19,7 @@
  * attributes depend on it. Ornament goes on ::before / ::after, and images go
  * in as `data:` URIs (CSP-safe).
  *
- * Available hooks: .whim-promo--inline-hook, --exit-intent, --slide-down,
+ * Available hooks: .whim-bogo--inline-hook, --exit-intent, --slide-down,
  * --slide-up, --modal, --preset-<animation>, .is-revealed, .is-dismissing,
  * .is-clicked, .whim-cta (a paragraph whose only content is a link).
  * ---------------------------------------------------------------------------
@@ -27,12 +27,12 @@
  * Promo bodies are editor-authored `<h3>/<p>/<a>` and this stylesheet loads
  * *before* the theme's, so bare element rules in the theme (`button { width:
  * 100% }`, `.c-content a { border-bottom: 2px solid }`) would win on load order.
- * The `#whim-promo` root is what outranks them. Do not lower it.
+ * The `#whim-bogo` root is what outranks them. Do not lower it.
  *
  * Animations only ever touch translate, scale, rotate, opacity and filter.
  */
 
-#whim-promo {
+#whim-bogo {
 	/* Surface */
 	--whim-bg: #fff;
 	--whim-text: #14140f;
@@ -72,7 +72,7 @@
 
 /* ---------------------------------------------------------------------- card */
 
-#whim-promo .whim-promo__card {
+#whim-bogo .whim-bogo__card {
 	background:
 		radial-gradient(
 			120% 110% at 100% 0%,
@@ -90,16 +90,16 @@
 
 /* A modal's card can outgrow the viewport (see promo-base.css's max-block-size),
    so it needs to scroll vertically. The bare rule above wins on specificity over
-   promo-base.css's `.whim-promo--modal .whim-promo__card { overflow-y: auto }`
+   promo-base.css's `.whim-bogo--modal .whim-bogo__card { overflow-y: auto }`
    (1-1-0 beats 0-2-0), so the modal case is restated here at 1-2-0 to restore it,
    clipping horizontally only. */
-#whim-promo.whim-promo--modal .whim-promo__card {
+#whim-bogo.whim-bogo--modal .whim-bogo__card {
 	overflow: hidden auto;
 }
 
 /* Accent hairline across the top edge, driven by a token so an editor can switch
    it off with `--whim-hairline: 0px` rather than by unsetting the pseudo-element. */
-#whim-promo .whim-promo__card::before {
+#whim-bogo .whim-bogo__card::before {
 	background: linear-gradient(
 		90deg,
 		var(--whim-accent),
@@ -112,23 +112,23 @@
 	position: absolute;
 }
 
-#whim-promo .whim-promo__body {
+#whim-bogo .whim-bogo__body {
 	display: flex;
 	flex-direction: column;
 	gap: clamp(0.75rem, 3cqi, 1.15rem);
 }
 
-#whim-promo .whim-promo__body > *:first-child {
+#whim-bogo .whim-bogo__body > *:first-child {
 	margin-block-start: 0;
 }
 
-#whim-promo .whim-promo__body > *:last-child {
+#whim-bogo .whim-bogo__body > *:last-child {
 	margin-block-end: 0;
 }
 
 /* ------------------------------------------------------------------ interior */
 
-#whim-promo .whim-promo__body :is(h1, h2, h3, h4, h5, h6) {
+#whim-bogo .whim-bogo__body :is(h1, h2, h3, h4, h5, h6) {
 	color: inherit;
 	font-family: var(--whim-font-display);
 	font-size: clamp(1.45rem, 5.2cqi, 2rem);
@@ -140,7 +140,7 @@
 	text-wrap: balance;
 }
 
-#whim-promo .whim-promo__body p {
+#whim-bogo .whim-bogo__body p {
 	font-family: var(--whim-font-body);
 	/* Themes turn hyphenation on for article prose; short promo copy reads badly
 	   broken mid-word on narrow cards. */
@@ -154,16 +154,16 @@
 
 /* Promos often have no heading at all, so the opening paragraph carries the
    hierarchy instead; anything after it steps back (still clears 4.5:1). */
-#whim-promo .whim-promo__body > p:first-child {
+#whim-bogo .whim-bogo__body > p:first-child {
 	font-size: clamp(1.0625rem, 3.8cqi, 1.25rem);
 	line-height: 1.4;
 }
 
-#whim-promo .whim-promo__body p:not(:first-child) {
+#whim-bogo .whim-bogo__body p:not(:first-child) {
 	color: color-mix(in oklab, currentcolor 78%, transparent);
 }
 
-#whim-promo .whim-promo__body :is(ul, ol) {
+#whim-bogo .whim-bogo__body :is(ul, ol) {
 	display: grid;
 	gap: 0.4rem;
 	font-family: var(--whim-font-body);
@@ -173,14 +173,14 @@
 	padding: 0;
 }
 
-#whim-promo .whim-promo__body li {
+#whim-bogo .whim-bogo__body li {
 	line-height: 1.45;
 	margin: 0;
 	padding-inline-start: 1.4em;
 	position: relative;
 }
 
-#whim-promo .whim-promo__body li::before {
+#whim-bogo .whim-bogo__body li::before {
 	color: var(--whim-accent);
 	content: "\2726";
 	font-size: 0.8em;
@@ -190,7 +190,7 @@
 }
 
 /* Prose links: readable, accent-underlined, never the theme's blue border-bottom. */
-#whim-promo .whim-promo__body a {
+#whim-bogo .whim-bogo__body a {
 	border: 0;
 	color: inherit;
 	text-decoration-color: color-mix(in oklab, var(--whim-accent) 55%, transparent);
@@ -200,14 +200,14 @@
 	transition: color 160ms linear, text-decoration-color 160ms linear;
 }
 
-#whim-promo .whim-promo__body a:hover {
+#whim-bogo .whim-bogo__body a:hover {
 	color: color-mix(in oklab, var(--whim-accent) 80%, var(--whim-text));
 	text-decoration-color: currentcolor;
 }
 
 /* The card carries tabindex so a modal can focus the dialog itself; that is not a
    control and must not draw a ring. */
-#whim-promo :is(a, button, input, [tabindex]):not(.whim-promo__card):focus-visible {
+#whim-bogo :is(a, button, input, [tabindex]):not(.whim-bogo__card):focus-visible {
 	outline: 2px solid color-mix(in oklab, var(--whim-accent) 75%, #14140f);
 	outline-offset: 3px;
 }
@@ -221,7 +221,7 @@
  * link inside a sentence — text nodes are not children for `:only-child`.
  * `.wp-block-button__link` is here so the Buttons block works too.
  */
-#whim-promo .whim-promo__body :is(
+#whim-bogo .whim-bogo__body :is(
 	.whim-cta,
 	.wp-block-button__link,
 	button,
@@ -259,19 +259,19 @@
 }
 
 /* A lone CTA paragraph should hug its button, not stretch to the prose measure. */
-#whim-promo .whim-promo__body p:has(> .whim-cta) {
+#whim-bogo .whim-bogo__body p:has(> .whim-cta) {
 	max-inline-size: none;
 }
 
 /* The Buttons block's own layout comes from core block CSS, which a promo body
    cannot count on being loaded. */
-#whim-promo .whim-promo__body .wp-block-buttons {
+#whim-bogo .whim-bogo__body .wp-block-buttons {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.6rem;
 }
 
-#whim-promo .whim-promo__body :is(
+#whim-bogo .whim-bogo__body :is(
 	.whim-cta,
 	.wp-block-button__link,
 	button,
@@ -284,7 +284,7 @@
 	translate: 0 -2px;
 }
 
-#whim-promo .whim-promo__body :is(
+#whim-bogo .whim-bogo__body :is(
 	.whim-cta,
 	.wp-block-button__link,
 	button,
@@ -298,7 +298,7 @@
 /* An image-only link is artwork, not a text pill: back it on white and drop the
    pill chrome. promote_cta_links() tags it too, because a link wrapping nothing
    but an image has no visible text on either side of the comparison. */
-#whim-promo .whim-promo__body .whim-cta:has(> img:only-child) {
+#whim-bogo .whim-bogo__body .whim-cta:has(> img:only-child) {
 	background: #fff;
 	border: 1px solid rgba(20, 20, 15, 0.14);
 	border-radius: calc(var(--whim-radius) / 2);
@@ -309,12 +309,12 @@
 	white-space: normal;
 }
 
-#whim-promo .whim-promo__body .whim-cta:has(> img:only-child):hover {
+#whim-bogo .whim-bogo__body .whim-cta:has(> img:only-child):hover {
 	background: #fff;
 	box-shadow: 0 3px 8px rgba(20, 20, 15, 0.3);
 }
 
-#whim-promo .whim-promo__body img {
+#whim-bogo .whim-bogo__body img {
 	block-size: auto;
 	max-inline-size: 100%;
 }
@@ -322,7 +322,7 @@
 /* "Add as a preferred source on Google" — editors add class whim-btn--google to a
    link. A white chip, so it reads on any card background, with the multicolour G
    as an inline data: URI. */
-#whim-promo .whim-promo__body a.whim-btn--google {
+#whim-bogo .whim-bogo__body a.whim-btn--google {
 	background: #fff;
 	border: 1px solid #dadce0;
 	box-shadow: 0 1px 3px rgba(20, 22, 27, 0.16);
@@ -331,13 +331,13 @@
 	text-decoration: none;
 }
 
-#whim-promo .whim-promo__body a.whim-btn--google:hover {
+#whim-bogo .whim-bogo__body a.whim-btn--google:hover {
 	background: #fff;
 	box-shadow: 0 3px 8px rgba(60, 64, 67, 0.3);
 	color: #3c4043;
 }
 
-#whim-promo .whim-promo__body a.whim-btn--google::before {
+#whim-bogo .whim-bogo__body a.whim-btn--google::before {
 	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath fill='%234285F4' d='M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z'/%3E%3Cpath fill='%2334A853' d='M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z'/%3E%3Cpath fill='%23FBBC05' d='M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z'/%3E%3Cpath fill='%23EA4335' d='M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z'/%3E%3C/svg%3E") center / contain no-repeat;
 	block-size: 1.1em;
 	content: "";
@@ -347,7 +347,7 @@
 
 /* --------------------------------------------------------------------- forms */
 
-#whim-promo .whim-promo__body form {
+#whim-bogo .whim-bogo__body form {
 	accent-color: var(--whim-accent);
 	display: flex;
 	flex-wrap: wrap;
@@ -356,7 +356,7 @@
 	max-inline-size: 34rem;
 }
 
-#whim-promo .whim-promo__body :is(
+#whim-bogo .whim-bogo__body :is(
 	input[type="email"],
 	input[type="text"],
 	input[type="tel"],
@@ -381,22 +381,22 @@
 	transition: border-color 160ms linear, box-shadow 160ms linear;
 }
 
-#whim-promo .whim-promo__body input::placeholder {
+#whim-bogo .whim-bogo__body input::placeholder {
 	color: color-mix(in oklab, var(--whim-text) 55%, transparent);
 	opacity: 1;
 }
 
-#whim-promo .whim-promo__body input:focus-visible {
+#whim-bogo .whim-bogo__body input:focus-visible {
 	border-color: color-mix(in oklab, var(--whim-accent) 60%, var(--whim-text));
 }
 
 /* Only flag a field once the visitor has actually finished with it. */
-#whim-promo .whim-promo__body input:user-invalid {
+#whim-bogo .whim-bogo__body input:user-invalid {
 	border-color: var(--whim-invalid);
 	box-shadow: 0 0 0 3px color-mix(in oklab, var(--whim-invalid) 18%, transparent);
 }
 
-#whim-promo .whim-promo__body label {
+#whim-bogo .whim-bogo__body label {
 	display: block;
 	font-family: var(--whim-font-display);
 	font-size: 0.875rem;
@@ -406,24 +406,24 @@
 
 /* Narrow cards (modal, sidebar): stack the field and its button full width. */
 @container (inline-size < 24rem) {
-	#whim-promo .whim-promo__body form {
+	#whim-bogo .whim-bogo__body form {
 		flex-direction: column;
 	}
 
-	#whim-promo .whim-promo__body :is(.whim-cta, .wp-block-button__link, button, input[type="submit"]) {
+	#whim-bogo .whim-bogo__body :is(.whim-cta, .wp-block-button__link, button, input[type="submit"]) {
 		inline-size: 100%;
 	}
 }
 
 /* --------------------------------------------------------------- inline slot */
 
-#whim-promo.whim-promo--inline-hook {
+#whim-bogo.whim-bogo--inline-hook {
 	margin-block: clamp(1.75rem, 5vw, 3rem);
 }
 
 /* -------------------------------------------------------- animation presets */
 
-#whim-promo .whim-promo__card {
+#whim-bogo .whim-bogo__card {
 	transition: opacity var(--whim-duration) var(--whim-ease),
 		translate var(--whim-duration) var(--whim-ease),
 		scale var(--whim-duration) var(--whim-ease),
@@ -434,23 +434,23 @@
    is-revealed reset — 1-2-0 — always wins, whatever the source order. Written
    flat, the two tie and the later rule wins, which parks a slide-in card off
    screen forever and leaves a modal stuck mid-animation. */
-#whim-promo:where(.whim-promo--preset-slide-up-spring) .whim-promo__card {
+#whim-bogo:where(.whim-bogo--preset-slide-up-spring) .whim-bogo__card {
 	rotate: -0.6deg;
 	scale: 0.97;
 	translate: 0 30px;
 }
 
-#whim-promo:where(.whim-promo--preset-slide-down-spring) .whim-promo__card {
+#whim-bogo:where(.whim-bogo--preset-slide-down-spring) .whim-bogo__card {
 	rotate: 0.6deg;
 	scale: 0.97;
 	translate: 0 -30px;
 }
 
-#whim-promo:where(.whim-promo--preset-fade-rise) .whim-promo__card {
+#whim-bogo:where(.whim-bogo--preset-fade-rise) .whim-bogo__card {
 	translate: 0 14px;
 }
 
-#whim-promo.is-revealed .whim-promo__card {
+#whim-bogo.is-revealed .whim-bogo__card {
 	rotate: none;
 	scale: 1;
 	translate: none;
@@ -460,7 +460,7 @@
    it stays at full weight so a presentation can borrow the spring while setting
    its own travel. */
 @supports (transition-timing-function: linear(0, 1)) {
-	#whim-promo:is(.whim-promo--preset-slide-up-spring, .whim-promo--preset-slide-down-spring) .whim-promo__card {
+	#whim-bogo:is(.whim-bogo--preset-slide-up-spring, .whim-bogo--preset-slide-down-spring) .whim-bogo__card {
 		transition-timing-function: linear(
 			0,
 			0.2 6%,
@@ -479,7 +479,7 @@
 
 /* Clear the close button (2.75rem tall, 0.75rem inset) whatever the padding
    token resolves to, so a long headline can never run under it. */
-#whim-promo.whim-promo--exit-intent .whim-promo__card {
+#whim-bogo.whim-bogo--exit-intent .whim-bogo__card {
 	margin: clamp(0.75rem, 3vw, 1.5rem) auto;
 	padding-block-start: max(var(--whim-padding), 4.25rem);
 }
@@ -487,38 +487,38 @@
 /* A bar travels its own full height, so it comes in off the edge it is pinned to
    rather than the preset's short hop. Later than the presets above, so it wins
    the 1-1-0 tie between two from-states. */
-#whim-promo:where(.whim-promo--slide-down) .whim-promo__card {
+#whim-bogo:where(.whim-bogo--slide-down) .whim-bogo__card {
 	rotate: none;
 	translate: 0 -120%;
 }
 
-#whim-promo:where(.whim-promo--slide-up) .whim-promo__card {
+#whim-bogo:where(.whim-bogo--slide-up) .whim-bogo__card {
 	rotate: none;
 	translate: 0 120%;
 }
 
-#whim-promo.whim-promo--modal .whim-promo__card {
+#whim-bogo.whim-bogo--modal .whim-bogo__card {
 	--whim-max-width: 29rem;
 }
 
-#whim-promo:where(.whim-promo--modal) .whim-promo__card {
+#whim-bogo:where(.whim-bogo--modal) .whim-bogo__card {
 	rotate: -1deg;
 	scale: 0.94;
 	translate: 0 16px;
 }
 
 /* A modal is read as one object: centre it rather than leaving a ragged edge. */
-#whim-promo.whim-promo--modal .whim-promo__body {
+#whim-bogo.whim-bogo--modal .whim-bogo__body {
 	align-items: center;
 	text-align: center;
 }
 
-#whim-promo.whim-promo--modal .whim-promo__body :is(h1, h2, h3, h4, h5, h6, p) {
+#whim-bogo.whim-bogo--modal .whim-bogo__body :is(h1, h2, h3, h4, h5, h6, p) {
 	margin-inline: auto;
 }
 
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-	#whim-promo .whim-promo__backdrop {
+	#whim-bogo .whim-bogo__backdrop {
 		-webkit-backdrop-filter: blur(6px) saturate(115%);
 		backdrop-filter: blur(6px) saturate(115%);
 		background: rgba(14, 14, 12, 0.5);
@@ -527,7 +527,7 @@
 
 /* ------------------------------------------------------------ close control */
 
-#whim-promo .whim-promo__close {
+#whim-bogo .whim-bogo__close {
 	align-items: center;
 	background: color-mix(in oklab, var(--whim-text) 7%, transparent);
 	border-radius: 50%;
@@ -542,8 +542,8 @@
 		rotate 240ms var(--whim-ease);
 }
 
-#whim-promo .whim-promo__close:hover,
-#whim-promo .whim-promo__close:focus-visible {
+#whim-bogo .whim-bogo__close:hover,
+#whim-bogo .whim-bogo__close:focus-visible {
 	background: color-mix(in oklab, var(--whim-text) 14%, transparent);
 	rotate: 90deg;
 	scale: 1.06;
@@ -551,11 +551,11 @@
 
 /* ------------------------------------------------------------------- whimsy */
 
-#whim-promo .whim-promo__body .is-clicked {
+#whim-bogo .whim-bogo__body .is-clicked {
 	position: relative;
 }
 
-#whim-promo .whim-promo__body .is-clicked::after {
+#whim-bogo .whim-bogo__body .is-clicked::after {
 	animation: whim-kf-sparkle 700ms var(--whim-ease) forwards;
 	background:
 		radial-gradient(circle, currentcolor 40%, transparent 45%) 8% 22% / 4px 4px no-repeat,
@@ -570,7 +570,7 @@
 }
 
 /* The Google chip's G also lives on ::before — keep the celebration off it. */
-#whim-promo .whim-promo__body a.whim-btn--google.is-clicked::after {
+#whim-bogo .whim-bogo__body a.whim-btn--google.is-clicked::after {
 	inset: -0.6rem;
 }
 
@@ -589,10 +589,10 @@
 /* ---------------------------------------------------------- reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
-	#whim-promo .whim-promo__card,
-	#whim-promo.whim-promo--modal .whim-promo__card,
-	#whim-promo.whim-promo--slide-down .whim-promo__card,
-	#whim-promo.whim-promo--slide-up .whim-promo__card {
+	#whim-bogo .whim-bogo__card,
+	#whim-bogo.whim-bogo--modal .whim-bogo__card,
+	#whim-bogo.whim-bogo--slide-down .whim-bogo__card,
+	#whim-bogo.whim-bogo--slide-up .whim-bogo__card {
 		rotate: none;
 		scale: 1;
 		transition: opacity 200ms linear;
@@ -601,33 +601,33 @@
 
 	/* Selector lists here mirror the CTA rules above verbatim: a lighter selector
 	   would lose the cascade and leave translate/scale animating. */
-	#whim-promo .whim-promo__body :is(a, button, input),
-	#whim-promo .whim-promo__body :is(
+	#whim-bogo .whim-bogo__body :is(a, button, input),
+	#whim-bogo .whim-bogo__body :is(
 		.whim-cta,
 		.wp-block-button__link,
 		button,
 		input[type="submit"],
 		input[type="button"]
 	),
-	#whim-promo .whim-promo__close {
+	#whim-bogo .whim-bogo__close {
 		transition: background-color 160ms linear, color 160ms linear;
 	}
 
-	#whim-promo .whim-promo__body :is(
+	#whim-bogo .whim-bogo__body :is(
 		.whim-cta,
 		.wp-block-button__link,
 		button,
 		input[type="submit"],
 		input[type="button"]
 	):is(:hover, :active),
-	#whim-promo .whim-promo__close:hover,
-	#whim-promo .whim-promo__close:focus-visible {
+	#whim-bogo .whim-bogo__close:hover,
+	#whim-bogo .whim-bogo__close:focus-visible {
 		rotate: none;
 		scale: 1;
 		translate: none;
 	}
 
-	#whim-promo .whim-promo__body .is-clicked::after {
+	#whim-bogo .whim-bogo__body .is-clicked::after {
 		animation: none;
 		content: none;
 	}

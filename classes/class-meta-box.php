@@ -189,7 +189,7 @@ class Meta_Box {
 		$is_published = 'publish' === $post->post_status;
 
 		// Templates travel to the browser unscoped; the button below swaps
-		// `#whim-promo` for this promo's id as it fills the field, so the editor
+		// `#whim-bogo` for this promo's id as it fills the field, so the editor
 		// reads exactly what will ship.
 		$templates = [];
 
@@ -321,6 +321,23 @@ class Meta_Box {
 			</select>
 		</div>
 
+		<div class="whim-field" id="whim-mobile-end-row"<?php echo $is_exit ? '' : ' style="display:none"'; ?>>
+			<label>
+				<input type="checkbox" name="whim_mobile_end" value="1"
+					<?php checked( (bool) self::get_value( $post_id, 'whim_mobile_end' ) ); ?> />
+				<?php esc_html_e( 'Also trigger on mobile when reaching the end of the content.', 'whimsical-promo' ); ?>
+			</label>
+			<p class="description">
+				<?php
+				printf(
+					/* translators: %s: link to the plugin settings screen, labelled "Promos → Settings". */
+					esc_html__( 'A phone has no cursor to leave the page. With this on, the promo opens once the end of the article scrolls into view instead. Which element counts as the article is set in %s.', 'whimsical-promo' ),
+					'<a href="' . esc_url( admin_url( 'edit.php?post_type=' . Post_Type::POST_TYPE . '&page=' . Settings::PAGE_SLUG ) ) . '">' . esc_html__( 'Promos → Settings', 'whimsical-promo' ) . '</a>'
+				);
+				?>
+			</p>
+		</div>
+
 		<div class="whim-field">
 			<label for="whim_animation"><?php esc_html_e( 'Animation', 'whimsical-promo' ); ?></label>
 			<select name="whim_animation" id="whim_animation">
@@ -363,9 +380,9 @@ class Meta_Box {
 				<p class="description">
 					<?php
 					printf(
-						/* translators: 1: the placeholder selector #whim-promo-ID. 2: this promo's real selector, e.g. #whim-promo-412. */
+						/* translators: 1: the placeholder selector #whim-bogo-ID. 2: this promo's real selector, e.g. #whim-bogo-412. */
 						esc_html__( 'Scope every selector to %1$s — that beats the plugin\'s own base styles without !important, and keeps this promo\'s CSS off the rest of the page. ID is a placeholder: it is replaced with this promo\'s own id (%2$s) when the page renders, so the same stylesheet can be pasted into any promo. A real id works too.', 'whimsical-promo' ),
-						'<code>#whim-promo-' . esc_html( Styles::ID_PLACEHOLDER ) . '</code>',
+						'<code>#whim-bogo-' . esc_html( Styles::ID_PLACEHOLDER ) . '</code>',
 						'<code>#' . esc_html( $wrapper_id ) . '</code>'
 					);
 					?>
@@ -434,6 +451,7 @@ class Meta_Box {
 				var placement  = document.getElementById( 'whim_placement' );
 				var hookRow    = document.getElementById( 'whim-hook-row' );
 				var presentRow = document.getElementById( 'whim-presentation-row' );
+				var mobileRow  = document.getElementById( 'whim-mobile-end-row' );
 				var cookieDays = document.getElementById( 'whim_cookie_days' );
 				var dayDefault = {
 					inline: '<?php echo esc_js( (string) Post_Type::DEFAULT_DAYS_INLINE ); ?>',
@@ -527,6 +545,9 @@ class Meta_Box {
 					if ( presentRow ) {
 						presentRow.style.display = isExit ? '' : 'none';
 					}
+					if ( mobileRow ) {
+						mobileRow.style.display = isExit ? '' : 'none';
+					}
 
 					// Only swap the value while it still holds the other placement's default.
 					var other = isExit ? dayDefault.inline : dayDefault.exit;
@@ -576,7 +597,7 @@ class Meta_Box {
 						// Same substitution the server does on output (Styles::scope), so the
 						// editor is reading the real thing rather than a placeholder.
 						field.value = template
-							.replace( /#whim-promo(?:-(?:\d+|ID))?(?![\w-])/gi, '#' + wrapperId )
+							.replace( /#whim-bogo(?:-(?:\d+|ID))?(?![\w-])/gi, '#' + wrapperId )
 							.replace( /\bwhim-kf-(?:(?:\d+|ID)-)?/gi, 'whim-kf-' + postId + '-' );
 						field.focus();
 					} );
@@ -710,6 +731,8 @@ class Meta_Box {
 				isset( $_POST['whim_presentation'] ) ? sanitize_text_field( wp_unslash( $_POST['whim_presentation'] ) ) : ''
 			)
 		);
+
+		update_post_meta( $post_id, 'whim_mobile_end', isset( $_POST['whim_mobile_end'] ) );
 
 		update_post_meta(
 			$post_id,

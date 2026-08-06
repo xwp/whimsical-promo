@@ -29,8 +29,9 @@ class Settings_Test extends Promo_TestCase {
 	public function test_defaults(): void {
 		$this->assertSame(
 			[
-				'tracking_enabled' => true,
-				'delivery'         => 'datalayer',
+				'tracking_enabled'  => true,
+				'delivery'          => 'datalayer',
+				'content_selectors' => Settings::DEFAULT_CONTENT_SELECTORS,
 			],
 			Settings::get()
 		);
@@ -67,11 +68,26 @@ class Settings_Test extends Promo_TestCase {
 	public function test_sanitize_handles_non_array_input(): void {
 		$this->assertSame(
 			[
-				'tracking_enabled' => false,
-				'delivery'         => 'datalayer',
+				'tracking_enabled'  => false,
+				'delivery'          => 'datalayer',
+				'content_selectors' => Settings::DEFAULT_CONTENT_SELECTORS,
 			],
 			Settings::sanitize( 'nope' )
 		);
+	}
+
+	/**
+	 * Selectors are normalised, and an emptied field goes back to the default rather
+	 * than leaving the mobile trigger with nothing to watch.
+	 */
+	public function test_selector_sanitization(): void {
+		$this->assertSame( '.article, main', Settings::sanitize_selectors( "  .article ,, main  \n" ) );
+		$this->assertSame( Settings::DEFAULT_CONTENT_SELECTORS, Settings::sanitize_selectors( '   ' ) );
+		$this->assertSame( Settings::DEFAULT_CONTENT_SELECTORS, Settings::sanitize_selectors( str_repeat( 'a', 501 ) ) );
+
+		update_option( Settings::OPTION, [ 'content_selectors' => '.article, main' ] );
+
+		$this->assertSame( [ '.article', 'main' ], Settings::selector_list() );
 	}
 
 	/**
@@ -88,8 +104,9 @@ class Settings_Test extends Promo_TestCase {
 
 		$this->assertSame(
 			[
-				'tracking' => true,
-				'delivery' => 'gtag',
+				'tracking'         => true,
+				'delivery'         => 'gtag',
+				'contentSelectors' => [ '.entry-content', '.post-content', 'article', 'main' ],
 			],
 			Settings::js_config()
 		);
@@ -143,8 +160,12 @@ class Settings_Test extends Promo_TestCase {
 		Settings::get_instance()->render_page();
 		$output = (string) ob_get_clean();
 
-		$this->assertStringContainsString( 'whimsical_promo', $output );
-		$this->assertStringContainsString( 'promo_placement', $output );
+		$this->assertStringContainsString( Settings::EVENT_NAME, $output );
+		$this->assertStringContainsString( 'bogo_placement', $output );
+
+		// The client's analytics naming: no parameter on this page may still say promo.
+		$this->assertStringNotContainsString( 'promo_id', $output );
+		$this->assertStringNotContainsString( 'promo_action', $output );
 		$this->assertStringContainsString( 'Custom Event', $output );
 		$this->assertStringContainsString( 'GA4 Event', $output );
 		$this->assertStringContainsString( 'custom dimension', $output );

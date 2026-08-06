@@ -21,7 +21,7 @@
 
 <script>
 	// Read before promo.js, exactly as Assets::enqueue() prints it.
-	window.whimPromoCfg = { tracking: true, delivery: 'datalayer' };
+	window.whimBogoCfg = { tracking: true, delivery: 'datalayer', contentSelectors: [ 'main' ] };
 
 	// The script pushes here; the tests read it back.
 	window.dataLayer = [];
@@ -43,11 +43,11 @@
 		<p>Spacer — scroll down to bring the promo into view.</p>
 	</div>
 
-	<div class="whim-promo-slot" data-whim-group="fixture">
+	<div class="whim-bogo-slot" data-whim-group="fixture">
 
 		<div
-			id="whim-promo-9001"
-			class="whim-promo whim-promo--inline-hook whim-promo--preset-fade-rise whim-promo--style-basic-1"
+			id="whim-bogo-9001"
+			class="whim-bogo whim-bogo--inline-hook whim-bogo--preset-fade-rise whim-bogo--style-basic-1"
 			data-whim-slug="__whim_fixture_a"
 			data-whim-style="basic-1"
 			data-whim-group="fixture"
@@ -58,8 +58,8 @@
 			hidden
 		>
 			<!-- No close button: Render emits one only for exit promos. -->
-			<div class="whim-promo__card">
-				<div class="whim-promo__body">
+			<div class="whim-bogo__card">
+				<div class="whim-bogo__body">
 					<h2>First promo</h2>
 					<p><a class="whim-cta" href="/subscribe/">Subscribe</a></p>
 				</div>
@@ -68,8 +68,8 @@
 
 		<!-- The hand-off target: gate `always`, so it wins outright once the first is spent. -->
 		<div
-			id="whim-promo-9002"
-			class="whim-promo whim-promo--inline-hook whim-promo--preset-fade-rise whim-promo--style-basic-1"
+			id="whim-bogo-9002"
+			class="whim-bogo whim-bogo--inline-hook whim-bogo--preset-fade-rise whim-bogo--style-basic-1"
 			data-whim-slug="__whim_fixture_b"
 			data-whim-style="basic-1"
 			data-whim-group="fixture"
@@ -79,8 +79,8 @@
 			data-whim-preset="fade-rise"
 			hidden
 		>
-			<div class="whim-promo__card">
-				<div class="whim-promo__body">
+			<div class="whim-bogo__card">
+				<div class="whim-bogo__body">
 					<h2>Fallback promo</h2>
 					<p><a class="whim-cta" href="/app/">Get the app</a></p>
 				</div>
@@ -92,16 +92,20 @@
 	<div style="height: 100vh"></div>
 </main>
 
+<!-- Comments and the site footer stand in here: the article ends before the page does,
+     which is the whole reason the end-of-content trigger takes a selector. -->
+<div style="height: 80vh"></div>
+
 <!--
 	Exit promos live in their own wrapper and are the only ones with a close button and
 	a backdrop. `data-whim-css` is deliberately omitted: it points at a WordPress route,
 	and this fixture must not need one. Open it with ?whim_preview=__whim_fixture_exit,
 	which skips the pointer check and the 5s dwell.
 -->
-<div class="whim-promo-exit" data-whim-group="fixture-exit">
+<div class="whim-bogo-exit" data-whim-group="fixture-exit">
 	<div
-		id="whim-promo-9003"
-		class="whim-promo whim-promo--exit-intent whim-promo--modal whim-promo--preset-fade-rise whim-promo--style-basic-1"
+		id="whim-bogo-9003"
+		class="whim-bogo whim-bogo--exit-intent whim-bogo--modal whim-bogo--preset-fade-rise whim-bogo--style-basic-1"
 		data-whim-slug="__whim_fixture_exit"
 		data-whim-style="basic-1"
 		data-whim-group="fixture-exit"
@@ -112,13 +116,44 @@
 		data-whim-presentation="modal"
 		hidden
 	>
-		<div class="whim-promo__backdrop" data-whim-close="1"></div>
-		<div class="whim-promo__card" role="dialog" tabindex="-1" aria-modal="true" aria-label="Fixture exit promo">
-			<div class="whim-promo__body">
+		<div class="whim-bogo__backdrop" data-whim-close="1"></div>
+		<div class="whim-bogo__card" role="dialog" tabindex="-1" aria-modal="true" aria-label="Fixture exit promo">
+			<div class="whim-bogo__body">
 				<h2>Exit promo</h2>
 				<p><a class="whim-cta" href="/newsletter/">Sign up</a></p>
 			</div>
-			<button type="button" class="whim-promo__close" data-whim-close="1" aria-label="Dismiss">&times;</button>
+			<button type="button" class="whim-bogo__close" data-whim-close="1" aria-label="Dismiss">&times;</button>
+		</div>
+	</div>
+</div>
+
+<!--
+	Its own wrapper, so it is a chain of one and cannot compete with the promo above.
+	`data-whim-mobile-end` is the opt-in for the touch trigger: no cursor leaves a phone,
+	so this one opens when the end of the element named in `contentSelectors` scrolls
+	into view. Desktop runs never reach it — the pointer check comes first.
+-->
+<div class="whim-bogo-exit" data-whim-group="fixture-mobile">
+	<div
+		id="whim-bogo-9004"
+		class="whim-bogo whim-bogo--exit-intent whim-bogo--slide-up whim-bogo--preset-fade-rise whim-bogo--style-basic-1"
+		data-whim-slug="__whim_fixture_mobile"
+		data-whim-style="basic-1"
+		data-whim-group="fixture-mobile"
+		data-whim-placement="exit_intent"
+		data-whim-days="30"
+		data-whim-gate="interact"
+		data-whim-preset="fade-rise"
+		data-whim-presentation="slide-up"
+		data-whim-mobile-end="1"
+		hidden
+	>
+		<div class="whim-bogo__card" role="dialog" tabindex="-1" aria-label="Fixture mobile promo">
+			<div class="whim-bogo__body">
+				<h2>End of the article</h2>
+				<p><a class="whim-cta" href="/newsletter/">Sign up</a></p>
+			</div>
+			<button type="button" class="whim-bogo__close" data-whim-close="1" aria-label="Dismiss">&times;</button>
 		</div>
 	</div>
 </div>

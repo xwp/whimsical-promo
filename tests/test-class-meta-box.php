@@ -43,6 +43,7 @@ class Meta_Box_Test extends Promo_TestCase {
 				'whim_show_until_interacted' => '1',
 				'whim_cookie_days'           => '120',
 				'whim_presentation'          => 'modal',
+				'whim_mobile_end'            => '1',
 				'whim_animation'             => 'fade-rise',
 				'whim_style_bg'              => 'var(--en-accent)',
 				'whim_style_radius'          => '18px',
@@ -68,6 +69,7 @@ class Meta_Box_Test extends Promo_TestCase {
 		$this->assertSame( '1', get_post_meta( $promo_id, 'whim_show_until_interacted', true ) );
 		$this->assertSame( '120', get_post_meta( $promo_id, 'whim_cookie_days', true ) );
 		$this->assertSame( 'modal', get_post_meta( $promo_id, 'whim_presentation', true ) );
+		$this->assertSame( '1', get_post_meta( $promo_id, 'whim_mobile_end', true ) );
 		$this->assertSame( 'fade-rise', get_post_meta( $promo_id, 'whim_animation', true ) );
 		$this->assertSame( 'var(--en-accent)', get_post_meta( $promo_id, 'whim_style_bg', true ) );
 		$this->assertSame( '18px', get_post_meta( $promo_id, 'whim_style_radius', true ) );
@@ -81,11 +83,12 @@ class Meta_Box_Test extends Promo_TestCase {
 
 		$promo_id = $this->create_promo( [ 'whim_show_until_interacted' => true ] );
 		$_POST    = $this->post_payload( $promo_id );
-		unset( $_POST['whim_show_until_interacted'], $_POST['whim_post_types'] );
+		unset( $_POST['whim_show_until_interacted'], $_POST['whim_post_types'], $_POST['whim_mobile_end'] );
 
 		Meta_Box::get_instance()->save( $promo_id, $this->get_promo( $promo_id ) );
 
 		$this->assertSame( '', get_post_meta( $promo_id, 'whim_show_until_interacted', true ) );
+		$this->assertSame( '', get_post_meta( $promo_id, 'whim_mobile_end', true ) );
 		$this->assertSame( [], get_post_meta( $promo_id, 'whim_post_types', true ) );
 	}
 
@@ -286,7 +289,7 @@ class Meta_Box_Test extends Promo_TestCase {
 
 		$this->assertStringContainsString( 'name="whim_custom_css"', $output );
 		$this->assertStringContainsString( 'id="whim-load-template"', $output );
-		$this->assertStringContainsString( '#whim-promo-' . $promo_id, $output );
+		$this->assertStringContainsString( '#whim-bogo-' . $promo_id, $output );
 
 		// The templates travel as JSON with tags hex-encoded, so a template can never
 		// close the script element it rides in.
@@ -302,7 +305,7 @@ class Meta_Box_Test extends Promo_TestCase {
 
 		$promo_id = $this->create_promo();
 
-		update_post_meta( $promo_id, Styles::META, '#whim-promo a { color: red }' );
+		update_post_meta( $promo_id, Styles::META, '#whim-bogo a { color: red }' );
 
 		ob_start();
 		Meta_Box::get_instance()->render( $this->get_promo( $promo_id ) );
@@ -315,7 +318,7 @@ class Meta_Box_Test extends Promo_TestCase {
 
 		Meta_Box::get_instance()->save( $promo_id, $this->get_promo( $promo_id ) );
 
-		$this->assertSame( '#whim-promo a { color: red }', get_post_meta( $promo_id, Styles::META, true ) );
+		$this->assertSame( '#whim-bogo a { color: red }', get_post_meta( $promo_id, Styles::META, true ) );
 	}
 
 	/**
@@ -328,14 +331,14 @@ class Meta_Box_Test extends Promo_TestCase {
 
 		$_POST = $this->post_payload(
 			$promo_id,
-			[ 'whim_custom_css' => "#whim-promo-{$promo_id} .whim-promo__card { color: red }</style><script>x</script>" ]
+			[ 'whim_custom_css' => "#whim-bogo-{$promo_id} .whim-bogo__card { color: red }</style><script>x</script>" ]
 		);
 
 		Meta_Box::get_instance()->save( $promo_id, $this->get_promo( $promo_id ) );
 
 		$stored = (string) get_post_meta( $promo_id, Styles::META, true );
 
-		$this->assertStringContainsString( '.whim-promo__card { color: red }', $stored );
+		$this->assertStringContainsString( '.whim-bogo__card { color: red }', $stored );
 		$this->assertStringNotContainsString( '</', $stored );
 	}
 
