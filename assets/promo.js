@@ -14,43 +14,43 @@
 ( function () {
 	'use strict';
 
-	var cfg = window.whimBogoCfg || { tracking: false, delivery: 'datalayer' };
-	var EVENT_NAME = 'whimsical_bogo';
-	var COOKIE_PREFIX = 'whim_seen_';
-	var EXIT_MIN_DWELL = 5000;
-	var EXIT_DEBOUNCE = 300;
-	var SPARKLE_MS = 700;
+	const cfg = window.whimBogoCfg || { tracking: false, delivery: 'datalayer' };
+	const EVENT_NAME = 'whimsical_bogo';
+	const COOKIE_PREFIX = 'whim_seen_';
+	const EXIT_MIN_DWELL = 5000;
+	const EXIT_DEBOUNCE = 300;
+	const SPARKLE_MS = 700;
 
 	// How long the site stays quiet after any overlay opens, so a reader moving quickly
 	// through several articles gets one overlay rather than one per page view.
-	var EXIT_QUIET_PERIOD = 900000;
-	var EXIT_QUIET_COOKIE = 'whim_exit_at';
+	const EXIT_QUIET_PERIOD = 900000;
+	const EXIT_QUIET_COOKIE = 'whim_exit_at';
 
-	var ENTER_MARGIN = '0px 0px -12% 0px';
+	const ENTER_MARGIN = '0px 0px -12% 0px';
 
 	// Symmetric -50% collapses the root box to the viewport's centre line.
-	var MIDLINE_MARGIN = '-50% 0px -50% 0px';
+	const MIDLINE_MARGIN = '-50% 0px -50% 0px';
 
 	// Where the reading line sits, as a fraction of the viewport height. The last tenth
 	// is left over deliberately: a line pinned to the very bottom edge is only crossed
 	// on a page that can scroll past the end of its article, and a page whose article
 	// runs to the final pixel never can.
-	var END_LINE_RATIO = 0.9;
+	const END_LINE_RATIO = 0.9;
 
 	// How long to let a resize settle before the reading line is measured again.
-	var RESIZE_SETTLE = 150;
+	const RESIZE_SETTLE = 150;
 
 	// Used when the page ships no list of its own — see Settings::DEFAULT_CONTENT_SELECTORS.
-	var CONTENT_SELECTORS = [ '.entry-content', '.post-content', 'article', 'main' ];
+	const CONTENT_SELECTORS = [ '.entry-content', '.post-content', 'article', 'main' ];
 
 	// How long to wait for an on-demand stylesheet before showing the promo anyway.
-	var CSS_TIMEOUT = 1500;
+	const CSS_TIMEOUT = 1500;
 
 	// Keyed by href, so two promos sharing a stylesheet share one request.
-	var cssLoads = {};
+	const cssLoads = {};
 
-	var pageLoadedAt = new Date().getTime();
-	var lastFocused = null;
+	const pageLoadedAt = Date.now();
+	let lastFocused = null;
 
 	/**
 	 * Preview target from the URL: `?whim_preview=1` for every promo on the page, or
@@ -59,8 +59,8 @@
 	 * Read here rather than passed in from PHP so the served HTML is identical with
 	 * and without the parameter, and page caches are untouched.
 	 */
-	var previewTarget = ( function () {
-		var match = /[?&]whim_preview=([^&#]*)/.exec( window.location.search );
+	const previewTarget = ( function () {
+		const match = /[?&]whim_preview=([^&#]*)/.exec( window.location.search );
 
 		if ( ! match ) {
 			return '';
@@ -69,7 +69,7 @@
 		try {
 			// Only ever compared against a slug, so anything outside that charset goes.
 			return decodeURIComponent( match[ 1 ] ).replace( /[^\w-]/g, '' );
-		} catch ( e ) {
+		} catch {
 			return '';
 		}
 	}() );
@@ -85,12 +85,12 @@
 	}
 
 	function readCookie( name ) {
-		var parts = document.cookie ? document.cookie.split( ';' ) : [];
-		var encoded = encodeURIComponent( name );
+		const parts = document.cookie ? document.cookie.split( ';' ) : [];
+		const encoded = encodeURIComponent( name );
 
-		for ( var i = 0; i < parts.length; i++ ) {
-			var pair = parts[ i ].split( '=' );
-			var key = pair[ 0 ].trim();
+		for ( const part of parts ) {
+			const pair = part.split( '=' );
+			const key = pair[ 0 ].trim();
 
 			// Names are compared raw. Decoding them would throw URIError on any unrelated
 			// cookie that is not valid percent-encoding — a third-party `100%off` would
@@ -103,11 +103,11 @@
 				return '';
 			}
 
-			var value = pair.slice( 1 ).join( '=' );
+			const value = pair.slice( 1 ).join( '=' );
 
 			try {
 				return decodeURIComponent( value );
-			} catch ( e ) {
+			} catch {
 				return value;
 			}
 		}
@@ -116,18 +116,17 @@
 	}
 
 	function writeCookie( name, days ) {
-		var maxAge = Math.max( 1, parseInt( days, 10 ) || 1 ) * 86400;
+		const maxAge = Math.max( 1, parseInt( days, 10 ) || 1 ) * 86400;
 
 		try {
-			document.cookie = encodeURIComponent( name ) + '=' + new Date().getTime() +
-				'; max-age=' + maxAge + '; path=/; SameSite=Lax';
-		} catch ( e ) {
+			document.cookie = `${ encodeURIComponent( name ) }=${ Date.now() }; max-age=${ maxAge }; path=/; SameSite=Lax`;
+		} catch {
 			// Cookies unavailable: the promo simply shows again next visit.
 		}
 	}
 
 	function attr( el, name ) {
-		return el.getAttribute( 'data-whim-' + name ) || '';
+		return el.getAttribute( `data-whim-${ name }` ) || '';
 	}
 
 	function hasSeen( promo ) {
@@ -150,13 +149,13 @@
 
 	/** Whether an overlay opened recently enough that this page view sits out. */
 	function inQuietPeriod() {
-		var last = parseInt( readCookie( EXIT_QUIET_COOKIE ), 10 );
+		const last = parseInt( readCookie( EXIT_QUIET_COOKIE ), 10 );
 
 		if ( isNaN( last ) ) {
 			return false;
 		}
 
-		var elapsed = new Date().getTime() - last;
+		const elapsed = Date.now() - last;
 
 		// A negative gap means the clock moved backwards, not that an overlay is due.
 		return elapsed >= 0 && elapsed < EXIT_QUIET_PERIOD;
@@ -168,7 +167,7 @@
 			return;
 		}
 
-		var params = {
+		const params = {
 			bogo_id: attr( promo, 'slug' ),
 			bogo_placement: attr( promo, 'placement' ),
 			bogo_action: action
@@ -188,15 +187,7 @@
 
 		window.dataLayer = window.dataLayer || [];
 
-		var payload = { event: EVENT_NAME };
-
-		for ( var key in params ) {
-			if ( Object.prototype.hasOwnProperty.call( params, key ) ) {
-				payload[ key ] = params[ key ];
-			}
-		}
-
-		window.dataLayer.push( payload );
+		window.dataLayer.push( { event: EVENT_NAME, ...params } );
 	}
 
 	/**
@@ -206,20 +197,19 @@
 	 * @return {Element|null} Winning promo, or null when every promo is spent.
 	 */
 	function chainWinner( container ) {
-		var promos = container.querySelectorAll( '.whim-bogo' );
-		var i;
+		const promos = container.querySelectorAll( '.whim-bogo' );
 
 		// A promo named in the URL wins outright, wherever it sits in the chain —
 		// otherwise a chain could only ever preview its first entry.
-		for ( i = 0; i < promos.length; i++ ) {
-			if ( '' !== previewTarget && previewTarget === attr( promos[ i ], 'slug' ) ) {
-				return promos[ i ];
+		for ( const promo of promos ) {
+			if ( '' !== previewTarget && previewTarget === attr( promo, 'slug' ) ) {
+				return promo;
 			}
 		}
 
-		for ( i = 0; i < promos.length; i++ ) {
-			if ( 'interact' !== attr( promos[ i ], 'gate' ) || ! hasSeen( promos[ i ] ) ) {
-				return promos[ i ];
+		for ( const promo of promos ) {
+			if ( 'interact' !== attr( promo, 'gate' ) || ! hasSeen( promo ) ) {
+				return promo;
 			}
 		}
 
@@ -250,7 +240,7 @@
 		// entrance transition has no start value to animate from.
 		void promo.offsetHeight;
 
-		window.requestAnimationFrame( function () {
+		window.requestAnimationFrame( () => {
 			promo.classList.add( 'is-revealed' );
 		} );
 	}
@@ -277,7 +267,7 @@
 		}
 
 		el.classList.add( 'is-clicked' );
-		window.setTimeout( function () {
+		window.setTimeout( () => {
 			el.classList.remove( 'is-clicked' );
 		}, SPARKLE_MS );
 	}
@@ -285,7 +275,7 @@
 	/* ---------------------------------------------------------------- inline */
 
 	function setupInlineSlot( slot ) {
-		var winner = chainWinner( slot );
+		const winner = chainWinner( slot );
 
 		if ( ! winner ) {
 			// Nothing to show: the slot keeps zero height, so there is no gap.
@@ -308,26 +298,26 @@
 		// Not a `view()` timeline: the ad script writes an inline `overflow` onto <body>,
 		// which makes body a scroll container with nothing to scroll, so `view()` binds
 		// to it and sticks at the end state.
-		observeOnce( winner, ENTER_MARGIN, function () {
+		observeOnce( winner, ENTER_MARGIN, () => {
 			play( winner );
 			pushEvent( winner, 'view' );
 		} );
 
-		observeOnce( winner, MIDLINE_MARGIN, function () {
+		observeOnce( winner, MIDLINE_MARGIN, () => {
 			light( winner );
 		} );
 	}
 
 	function observeOnce( target, rootMargin, callback ) {
-		var observer = new IntersectionObserver( function ( entries ) {
-			for ( var i = 0; i < entries.length; i++ ) {
-				if ( entries[ i ].isIntersecting ) {
+		const observer = new IntersectionObserver( ( entries ) => {
+			for ( const entry of entries ) {
+				if ( entry.isIntersecting ) {
 					observer.disconnect();
 					callback();
 					return;
 				}
 			}
-		}, { rootMargin: rootMargin } );
+		}, { rootMargin } );
 
 		observer.observe( target );
 	}
@@ -342,7 +332,7 @@
 	 * than one that never appears — so a blocked or slow sheet cannot swallow it.
 	 */
 	function ensureCss( promo, done ) {
-		var href = attr( promo, 'css' );
+		const href = attr( promo, 'css' );
 
 		if ( ! href ) {
 			if ( done ) {
@@ -352,7 +342,7 @@
 			return;
 		}
 
-		var state = cssLoads[ href ];
+		let state = cssLoads[ href ];
 
 		if ( state && state.settled ) {
 			if ( done ) {
@@ -366,7 +356,7 @@
 			state = { settled: false, waiting: [], timer: null };
 			cssLoads[ href ] = state;
 
-			var settle = function () {
+			const settle = () => {
 				if ( state.settled ) {
 					return;
 				}
@@ -379,7 +369,7 @@
 				}
 			};
 
-			var link = document.createElement( 'link' );
+			const link = document.createElement( 'link' );
 
 			link.rel = 'stylesheet';
 			link.href = href;
@@ -396,7 +386,7 @@
 	}
 
 	function setupExitIntent( container ) {
-		var winner = chainWinner( container );
+		const winner = chainWinner( container );
 
 		if ( ! winner ) {
 			return;
@@ -405,7 +395,7 @@
 		// Preview skips the gesture, the dwell and the pointer check, so the state can
 		// be reviewed straight away and on a touch device.
 		if ( isPreview( winner ) ) {
-			ensureCss( winner, function () {
+			ensureCss( winner, () => {
 				showExit( winner );
 			} );
 
@@ -418,7 +408,7 @@
 			return;
 		}
 
-		var pointerQuery = window.matchMedia && window.matchMedia( '(hover: hover) and (pointer: fine)' );
+		const pointerQuery = window.matchMedia && window.matchMedia( '(hover: hover) and (pointer: fine)' );
 
 		if ( ! pointerQuery || ! pointerQuery.matches ) {
 			// Touch and coarse-pointer devices have no exit intent to detect, so the end
@@ -433,9 +423,9 @@
 		// cookie already suppressed it never get here, and never pay for the CSS.
 		ensureCss( winner );
 
-		var root = document.documentElement;
-		var timer = null;
-		var fired = false;
+		const root = document.documentElement;
+		let timer = null;
+		let fired = false;
 
 		function onLeave( event ) {
 			if ( fired || null !== timer ) {
@@ -446,16 +436,16 @@
 				return;
 			}
 
-			if ( new Date().getTime() - pageLoadedAt < EXIT_MIN_DWELL ) {
+			if ( Date.now() - pageLoadedAt < EXIT_MIN_DWELL ) {
 				return;
 			}
 
-			timer = window.setTimeout( function () {
+			timer = window.setTimeout( () => {
 				fired = true;
 				root.removeEventListener( 'mouseleave', onLeave );
 
 				// Already in flight from arming, so this is normally instant.
-				ensureCss( winner, function () {
+				ensureCss( winner, () => {
 					showExit( winner );
 				} );
 			}, EXIT_DEBOUNCE );
@@ -472,18 +462,18 @@
 	 * @return {Element|null} Content element, or null when the page has none of them.
 	 */
 	function contentElement() {
-		var selectors = cfg.contentSelectors && cfg.contentSelectors.length
+		const selectors = cfg.contentSelectors && cfg.contentSelectors.length
 			? cfg.contentSelectors
 			: CONTENT_SELECTORS;
 
-		for ( var i = 0; i < selectors.length; i++ ) {
-			var found = null;
+		for ( const selector of selectors ) {
+			let found = null;
 
 			try {
 				// One at a time: a comma-joined list returns whichever match comes first
 				// in the document, not the first selector the site listed.
-				found = document.querySelector( selectors[ i ] );
-			} catch ( e ) {
+				found = document.querySelector( selector );
+			} catch {
 				// One unusable selector in the setting is not a reason to give up on the rest.
 			}
 
@@ -517,16 +507,16 @@
 	 * @param {Function} callback Called once, then the observer disconnects.
 	 */
 	function observeEndOnce( target, callback ) {
-		var observer = null;
-		var settle = null;
-		var done = false;
+		let observer = null;
+		let settle = null;
+		let done = false;
 
 		function onChange( entries ) {
-			var entry = entries[ entries.length - 1 ];
+			const entry = entries[ entries.length - 1 ];
 
 			// rootBounds is null in some cross-origin framing cases, where the margin
 			// cannot be read back — the line we asked for is the closest honest stand-in.
-			var line = entry.rootBounds ? entry.rootBounds.bottom : readingLine();
+			const line = entry.rootBounds ? entry.rootBounds.bottom : readingLine();
 
 			if ( done || entry.boundingClientRect.bottom > line ) {
 				return;
@@ -539,7 +529,7 @@
 		}
 
 		function connect() {
-			var line = readingLine();
+			const line = readingLine();
 
 			if ( observer ) {
 				observer.disconnect();
@@ -547,7 +537,7 @@
 
 			// Top edge pulled down to the line, bottom edge pulled up to meet it.
 			observer = new IntersectionObserver( onChange, {
-				rootMargin: -line + 'px 0px ' + ( line - window.innerHeight ) + 'px 0px'
+				rootMargin: `${ -line }px 0px ${ line - window.innerHeight }px 0px`
 			} );
 
 			observer.observe( target );
@@ -555,7 +545,7 @@
 
 		function onResize() {
 			window.clearTimeout( settle );
-			settle = window.setTimeout( function () {
+			settle = window.setTimeout( () => {
 				if ( ! done ) {
 					connect();
 				}
@@ -568,7 +558,7 @@
 
 	/** Runs a callback once the page has been open as long as exit intent waits out. */
 	function afterDwell( callback ) {
-		var waited = new Date().getTime() - pageLoadedAt;
+		const waited = Date.now() - pageLoadedAt;
 
 		if ( waited >= EXIT_MIN_DWELL ) {
 			callback();
@@ -589,7 +579,7 @@
 			return;
 		}
 
-		var content = contentElement();
+		const content = contentElement();
 
 		if ( ! content ) {
 			return;
@@ -599,9 +589,9 @@
 		// still reading, not at the moment the card has to appear.
 		ensureCss( promo );
 
-		observeEndOnce( content, function () {
-			afterDwell( function () {
-				ensureCss( promo, function () {
+		observeEndOnce( content, () => {
+			afterDwell( () => {
+				ensureCss( promo, () => {
 					showExit( promo );
 				} );
 			} );
@@ -620,25 +610,25 @@
 			promo.querySelector( '.whim-bogo__close' );
 	}
 
-	var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+	const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 	/** Keeps Tab inside a modal promo, so it never reaches page content behind it. */
 	function trapTab( promo, event ) {
-		var items = promo.querySelectorAll( FOCUSABLE );
+		const items = promo.querySelectorAll( FOCUSABLE );
 
 		if ( ! items.length ) {
 			event.preventDefault();
 			return;
 		}
 
-		var first = items[ 0 ];
-		var last = items[ items.length - 1 ];
-		var active = document.activeElement;
+		const first = items[ 0 ];
+		const last = items[ items.length - 1 ];
+		const active = document.activeElement;
 
 		// Membership in `items`, not mere containment: the card itself sits inside
 		// `promo` but carries tabindex="-1" and so is never one of the stops, which
 		// `promo.contains()` alone would miss on the very first Shift+Tab after open.
-		var inside = Array.prototype.indexOf.call( items, active ) > -1;
+		const inside = Array.from( items ).includes( active );
 
 		if ( event.shiftKey && ( ! inside || active === first ) ) {
 			event.preventDefault();
@@ -661,10 +651,12 @@
 			writeCookie( EXIT_QUIET_COOKIE, 1 );
 		}
 
+		document.body.classList.add( 'whim-has-overlay' );
+
 		if ( 'modal' === attr( promo, 'presentation' ) ) {
 			document.body.classList.add( 'whim-has-modal' );
 
-			var target = focusTarget( promo );
+			const target = focusTarget( promo );
 
 			if ( target ) {
 				target.focus();
@@ -675,7 +667,7 @@
 	}
 
 	function onKeydown( event ) {
-		var open = document.querySelector( '.whim-bogo--exit-intent.is-revealed' );
+		const open = document.querySelector( '.whim-bogo--exit-intent.is-revealed' );
 
 		if ( ! open ) {
 			return;
@@ -695,12 +687,13 @@
 
 	function dismiss( promo ) {
 		document.removeEventListener( 'keydown', onKeydown );
+		document.body.classList.remove( 'whim-has-overlay' );
 		document.body.classList.remove( 'whim-has-modal' );
 
 		promo.classList.remove( 'is-revealed' );
 		promo.classList.add( 'is-dismissing' );
 
-		window.setTimeout( function () {
+		window.setTimeout( () => {
 			promo.hidden = true;
 			promo.classList.remove( 'is-dismissing' );
 		}, 400 );
@@ -718,13 +711,13 @@
 	/* ------------------------------------------------------------ delegation */
 
 	function onClick( event ) {
-		var target = event.target;
+		const target = event.target;
 
 		if ( ! target || ! target.closest ) {
 			return;
 		}
 
-		var promo = target.closest( '.whim-bogo' );
+		const promo = target.closest( '.whim-bogo' );
 
 		if ( ! promo ) {
 			return;
@@ -735,7 +728,7 @@
 			return;
 		}
 
-		var action = target.closest( 'a, button, input[type="submit"]' );
+		const action = target.closest( 'a, button, input[type="submit"]' );
 
 		if ( ! action ) {
 			return;
@@ -747,13 +740,13 @@
 	}
 
 	function onSubmit( event ) {
-		var form = event.target;
+		const form = event.target;
 
 		if ( ! form || ! form.closest ) {
 			return;
 		}
 
-		var promo = form.closest( '.whim-bogo' );
+		const promo = form.closest( '.whim-bogo' );
 
 		if ( ! promo ) {
 			return;
@@ -766,16 +759,12 @@
 	/* ------------------------------------------------------------------ init */
 
 	function init() {
-		var slots = document.querySelectorAll( '.whim-bogo-slot' );
-
-		for ( var i = 0; i < slots.length; i++ ) {
-			setupInlineSlot( slots[ i ] );
+		for ( const slot of document.querySelectorAll( '.whim-bogo-slot' ) ) {
+			setupInlineSlot( slot );
 		}
 
-		var exits = document.querySelectorAll( '.whim-bogo-exit' );
-
-		for ( var j = 0; j < exits.length; j++ ) {
-			setupExitIntent( exits[ j ] );
+		for ( const exit of document.querySelectorAll( '.whim-bogo-exit' ) ) {
+			setupExitIntent( exit );
 		}
 
 		document.addEventListener( 'click', onClick );

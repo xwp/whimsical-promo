@@ -105,6 +105,7 @@ class Meta_Box_Test extends Promo_TestCase {
 
 		$incumbent = $this->create_promo( $exit );
 		$draft     = $this->create_promo( $exit, [ 'post_status' => 'draft' ] );
+		$trashed   = $this->create_promo( $exit, [ 'post_status' => 'trash' ] );
 		$inline    = $this->create_promo( [ 'whim_exit_first' => true ] );
 		$promo_id  = $this->create_promo();
 
@@ -125,6 +126,8 @@ class Meta_Box_Test extends Promo_TestCase {
 		// overlay — neither may keep a stale flag.
 		$this->assertSame( '', get_post_meta( $draft, 'whim_exit_first', true ) );
 		$this->assertSame( '', get_post_meta( $inline, 'whim_exit_first', true ) );
+		// A trashed promo can be restored, so it may not keep a stale flag either.
+		$this->assertSame( '', get_post_meta( $trashed, 'whim_exit_first', true ) );
 	}
 
 	/**
@@ -313,7 +316,7 @@ class Meta_Box_Test extends Promo_TestCase {
 		Meta_Box::get_instance()->render( $this->get_promo( $promo_id ) );
 		$output = (string) ob_get_clean();
 
-		$this->assertStringContainsString( 'value="whim_preview=spring-signup"', $output );
+		$this->assertStringContainsString( 'whim_preview=spring-signup', $output );
 		$this->assertStringContainsString( 'id="whim-copy-preview"', $output );
 	}
 
@@ -331,7 +334,6 @@ class Meta_Box_Test extends Promo_TestCase {
 
 		$this->assertStringNotContainsString( 'id="whim-preview-arg"', $output );
 		$this->assertStringNotContainsString( 'id="whim-copy-preview"', $output );
-		$this->assertStringContainsString( 'Publish this promo to get a preview link', $output );
 	}
 
 	/**

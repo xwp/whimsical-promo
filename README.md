@@ -2,7 +2,7 @@
 
 Editor-managed promo cards — newsletter sign-ups, app pitches, any CTA — rendered
 after the post body, at a theme hook of your choosing, or on exit intent: the cursor
-leaving the window on desktop, and optionally the end of the article on a phone.
+leaving the window on desktop, and optionally the end of the article on a coarse-pointer device.
 Copy, design and targeting all live in the block editor, so changes ship without a
 deployment.
 
@@ -137,12 +137,13 @@ rejected on save: an admin notice names the fields, and the previous value is ke
 
 ### Hooks that are refused
 
-`wp_head`, `wp_footer`, `template_redirect`, `wp_enqueue_scripts`, `the_content`,
-`the_title` and `the_excerpt` are cleared on save, and dropped from the suggestion list
-even if a theme adds them. Each one breaks the page rather than the promo: `wp_head` puts
-a card in `<head>`, `wp_footer` is where the exit-intent chain already renders, the two
-early actions print before the document opens, and the three filters print above the value
-they filter rather than after it. Use `whim_after_content` instead of `the_content`.
+`wp_head`, `wp_footer`, `shutdown`, `template_redirect`, `wp_enqueue_scripts`,
+`the_content`, `the_title` and `the_excerpt` are cleared on save, and dropped from the
+suggestion list even if a theme adds them. Each one breaks the page rather than the promo:
+`wp_head` puts a card in `<head>`, `wp_footer` is where the exit-intent chain already
+renders, `shutdown` prints after `</html>`, the two early actions print before the document
+opens, and the three filters print above the value they filter rather than after it. Use
+`whim_after_content` instead of `the_content`.
 
 Every other name is allowed, including one your theme has not fired yet. A hook that never
 fires renders nothing, and a name that turns out to be a filter is handed its value back
@@ -184,7 +185,7 @@ quiet period, and an active one does not block a preview.
 
 ### Reaching the end of the content, on mobile
 
-Exit intent is a cursor gesture, so it does not exist on a phone. Ticking **Also
+Exit intent is a cursor gesture, so it does not exist on a coarse-pointer device. Ticking **Also
 trigger on mobile when reaching the end of the content** gives an exit-intent promo
 a second way in: on any device that reports a coarse pointer, it opens once the end
 of the article has scrolled up near the bottom of the viewport. Desktop is untouched
@@ -409,6 +410,19 @@ they have no selector to confine, and `url()` can still point at a third-party
 host. The `manage_options` gate below is the real boundary: this closes the
 accident, not a hostile administrator.
 
+#### State inferred from `<body>` classes
+
+The one exception to the rule above. While an exit-intent overlay is on screen,
+`promo.js` puts classes on `<body>`:
+
+| Class              | When                                                           |
+| ------------------ | -------------------------------------------------------------- |
+| `whim-has-overlay` | any exit-intent overlay is open — modal, top bar or bottom bar |
+| `whim-has-modal`   | the open overlay is the modal presentation                     |
+
+`whim-has-modal` is the narrower of the two and is what locks page scroll, so
+write rules against `whim-has-overlay` unless a rule is meant for the modal alone.
+
 #### Designing with an AI agent
 
 **Create more designs using AI agents?** on the promo screen holds a
@@ -511,7 +525,7 @@ there for theme-side and analytics selectors.
   the backdrop is never punctured.
 - **Everywhere else, the end of the article stands in for it** — but only for
   promos that asked for it. The same dwell and the same cookie apply, so a promo
-  spent on a phone is spent everywhere.
+  spent on a coarse-pointer device is spent everywhere.
 - **A modal opens focused on the dialog itself**, not on × and not on a control.
   Nothing is armed the instant it appears, and the first Tab reaches the promo's
   own call to action — × is last in the card, so Tab never offers it first. Only
@@ -543,7 +557,10 @@ there for theme-side and analytics selectors.
 a delivery mode — push to `dataLayer` (Google Tag Manager) or call `gtag()`
 directly. With tracking off, promos work exactly as before and emit nothing.
 
-Every interaction emits one event, `whimsical_bogo`:
+Every interaction emits one event, `whimsical_bogo`. `bogo_target` is only present
+on `click` (link `href`, else element `id`, else `name`) and `submit` (form `id`,
+else its `action`); `view` and `dismiss` omit it. A submit control can fire both a
+`click` and a `submit` event.
 
 ```js
 window.dataLayer.push({
@@ -551,7 +568,7 @@ window.dataLayer.push({
 	bogo_id: "newsletter-inline", // the promo post slug
 	bogo_placement: "inline_hook", // inline_hook | exit_intent
 	bogo_action: "view", // view | click | submit | dismiss
-	bogo_target: "/subscribe/", // link href or form id, on click/submit
+	bogo_target: "/subscribe/", // click: href || id || name; submit: form id || action
 });
 ```
 
@@ -562,7 +579,7 @@ In `gtag` mode the same payload goes to
 ### Google Tag Manager
 
 1. **Variables → New → Data Layer Variable**, once per field: `bogo_id`,
-   `bogo_placement`, `bogo_action`, `bogo_target`.
+   `bogo_placement`, `bogo_action`, `bogo_target` (blank on `view`/`dismiss`).
 2. **Triggers → New → Custom Event**, event name `whimsical_bogo`, fire on all
    custom events.
 3. **Tags → New → Google Analytics: GA4 Event**. Event name `whimsical_bogo`;

@@ -28,13 +28,6 @@ class Assets {
 	const HANDLE = 'whimsical-bogo';
 
 	/**
-	 * Asset version.
-	 *
-	 * @var string
-	 */
-	const VERSION = '1.7.0';
-
-	/**
 	 * Hooks.
 	 *
 	 * @return void
@@ -61,7 +54,7 @@ class Assets {
 			self::HANDLE,
 			plugins_url( 'assets/promo-base.css', PLUGIN_FILE ),
 			[],
-			self::VERSION
+			VERSION
 		);
 
 		// Only inline promos get their CSS at page load. An exit-intent promo may never
@@ -80,7 +73,7 @@ class Assets {
 			self::HANDLE,
 			plugins_url( 'assets/promo.js', PLUGIN_FILE ),
 			[],
-			self::VERSION,
+			VERSION,
 			[
 				'in_footer' => true,
 				'strategy'  => 'defer',
@@ -118,9 +111,7 @@ class Assets {
 
 		foreach ( $hooked as $promos ) {
 			foreach ( $promos as $promo ) {
-				if ( $promo instanceof WP_Post ) {
-					$ids[ (int) $promo->ID ] = (int) $promo->ID;
-				}
+				$ids[ (int) $promo->ID ] = (int) $promo->ID;
 			}
 		}
 
@@ -165,10 +156,10 @@ class Assets {
 	 * The concatenator resolves handles to files on disk, which these have not got, and
 	 * concatenating them would also undo the non-blocking load above.
 	 *
-	 * @param bool   $do_concat Whether to concatenate.
-	 * @param string $handle    Style handle.
+	 * @param mixed $do_concat Whether to concatenate.
+	 * @param mixed $handle    Style handle.
 	 *
-	 * @return bool
+	 * @return mixed
 	 */
 	public function skip_concat( $do_concat, $handle ) {
 		if ( is_string( $handle ) && 0 === strpos( $handle, self::HANDLE . '-' ) ) {

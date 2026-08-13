@@ -4,7 +4,7 @@
  * Description: Editor-managed promo cards (newsletter, app, custom CTAs) rendered at theme hooks or on exit intent, with client-side chaining, cookies, and dataLayer/gtag tracking.
  * Plugin URI: https://github.com/xwp/whimsical-promo
  * Author: XWP
- * Version: 1.2.0
+ * Version: 1.3.0
  * Requires PHP: 8.1
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -21,6 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const PLUGIN_FILE = __FILE__;
+
+const VERSION = '1.3.0';
 
 require_once __DIR__ . '/trait-singleton.php';
 

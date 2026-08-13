@@ -76,7 +76,9 @@ class Render {
 	public function collect(): void {
 		$this->reset();
 
-		if ( is_admin() || ! is_singular() ) {
+		// A single-post feed is singular, and a hook name is free text, so nothing is
+		// attached there rather than trusting each render path to check.
+		if ( is_admin() || is_feed() || ! is_singular() ) {
 			return;
 		}
 

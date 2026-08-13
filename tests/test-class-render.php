@@ -132,6 +132,28 @@ class Render_Test extends Promo_TestCase {
 	}
 
 	/**
+	 * A feed request attaches nothing at all, so a hook that does fire in a feed
+	 * cannot put card markup in the XML.
+	 */
+	public function test_a_feed_request_attaches_no_hooks(): void {
+		$this->create_promo( [ 'whim_hook' => 'whim_test_feed_hook' ] );
+
+		$post_id = self::factory()->post->create();
+		$this->assertIsInt( $post_id );
+		$this->visit( add_query_arg( 'feed', 'rss2', (string) get_permalink( $post_id ) ) );
+
+		// Singular as well, or the existing !is_singular() bail would carry the test.
+		$this->assertTrue( is_feed(), 'the request under test is not a feed' );
+		$this->assertTrue( is_singular(), 'a single-post feed should still be singular' );
+
+		ob_start();
+		do_action( 'whim_test_feed_hook' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Test hook.
+		$output = (string) ob_get_clean();
+
+		$this->assertSame( '', $output );
+	}
+
+	/**
 	 * A hook name that turns out to be a filter must not eat the filtered value:
 	 * add_action() and add_filter() share one registry, so a callback returning
 	 * nothing used to blank whatever it was attached to.

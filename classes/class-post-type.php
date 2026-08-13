@@ -61,6 +61,8 @@ class Post_Type {
 		'wp_head',
 		// Render::EXIT_HOOK — an inline chain here lands on top of the exit chain.
 		'wp_footer',
+		// Fires after </html>, so the card lands outside the document.
+		'shutdown',
 		// Both fire before the template opens, so output would precede the doctype.
 		'template_redirect',
 		'wp_enqueue_scripts',

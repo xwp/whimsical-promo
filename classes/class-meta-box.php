@@ -65,7 +65,7 @@ class Meta_Box {
 	/**
 	 * Hook name suggestions offered in the datalist.
 	 *
-	 * @return string[]
+	 * @return non-empty-string[]
 	 */
 	public static function hook_suggestions(): array {
 		/**
@@ -93,12 +93,13 @@ class Meta_Box {
 	 * Hook a new promo starts on.
 	 *
 	 * The first suggestion, so a theme that filters its own hooks to the front owns
-	 * the default without the plugin naming a theme hook.
+	 * the default without the plugin naming a theme hook. Falls back to the plugin's
+	 * own hook, so a filter that empties the list cannot default a promo to nowhere.
 	 *
-	 * @return string
+	 * @return non-empty-string
 	 */
 	public static function default_hook(): string {
-		return self::hook_suggestions()[0] ?? '';
+		return self::hook_suggestions()[0] ?? Post_Type::CONTENT_HOOK;
 	}
 
 	/**
@@ -192,7 +193,7 @@ class Meta_Box {
 		$can_edit    = Styles::can_edit();
 		$wrapper_id  = Styles::wrapper_id( $post_id );
 		$custom_css  = (string) self::get_value( $post_id, Styles::META );
-		$preview_arg = 'whim_preview=' . Render::promo_slug( $post );
+		$preview_arg = '?whim_preview=' . Render::promo_slug( $post );
 
 		// Only published promos are ever placed, so a preview link for a draft would
 		// open nothing at all.
@@ -475,19 +476,19 @@ class Meta_Box {
 
 		<script>
 			( function () {
-				var placement  = document.getElementById( 'whim_placement' );
-				var hookRow    = document.getElementById( 'whim-hook-row' );
-				var presentRow = document.getElementById( 'whim-presentation-row' );
-				var mobileRow  = document.getElementById( 'whim-mobile-end-row' );
-				var firstRow   = document.getElementById( 'whim-exit-first-row' );
-				var cookieDays = document.getElementById( 'whim_cookie_days' );
-				var dayDefault = {
+				const placement  = document.getElementById( 'whim_placement' );
+				const hookRow    = document.getElementById( 'whim-hook-row' );
+				const presentRow = document.getElementById( 'whim-presentation-row' );
+				const mobileRow  = document.getElementById( 'whim-mobile-end-row' );
+				const firstRow   = document.getElementById( 'whim-exit-first-row' );
+				const cookieDays = document.getElementById( 'whim_cookie_days' );
+				const dayDefault = {
 					inline: '<?php echo esc_js( (string) Post_Type::DEFAULT_DAYS_INLINE ); ?>',
 					exit: '<?php echo esc_js( (string) Post_Type::DEFAULT_DAYS_EXIT ); ?>'
 				};
 
-				var gate      = document.querySelector( 'input[name="whim_show_until_interacted"]' );
-				var cookieRow = document.getElementById( 'whim-cookie-days-row' );
+				const gate      = document.querySelector( 'input[name="whim_show_until_interacted"]' );
+				const cookieRow = document.getElementById( 'whim-cookie-days-row' );
 
 				// The lifetime only means anything while the gate is on, so it is only on
 				// screen then — and emptying it is the way back off, in both directions.
@@ -510,18 +511,16 @@ class Meta_Box {
 				if ( gate && cookieDays ) {
 					gate.addEventListener( 'change', syncGate );
 
-					function meansAlways() {
-						return '' === cookieDays.value.trim() || 0 === Number( cookieDays.value );
-					}
+					const meansAlways = () => '' === cookieDays.value.trim() || 0 === Number( cookieDays.value );
 
 					// Unticked as you type, but the row is not pulled out from under the
 					// caret until you leave the field. Typing a real number again re-ticks,
 					// so correcting a 0 in place cannot leave the two contradicting.
-					cookieDays.addEventListener( 'input', function () {
+					cookieDays.addEventListener( 'input', () => {
 						gate.checked = ! meansAlways();
 					} );
 
-					cookieDays.addEventListener( 'blur', function () {
+					cookieDays.addEventListener( 'blur', () => {
 						if ( meansAlways() ) {
 							gate.checked = false;
 							syncGate();
@@ -531,23 +530,23 @@ class Meta_Box {
 					syncGate();
 				}
 
-				var copyBtn = document.getElementById( 'whim-copy-preview' );
-				var copyArg = document.getElementById( 'whim-preview-arg' );
+				const copyBtn = document.getElementById( 'whim-copy-preview' );
+				const copyArg = document.getElementById( 'whim-preview-arg' );
 
 				if ( copyBtn && copyArg ) {
-					copyBtn.addEventListener( 'click', function () {
+					copyBtn.addEventListener( 'click', () => {
 						copyArg.select();
 
-						var done = function () {
-							var label = copyBtn.textContent;
+						const done = () => {
+							const label = copyBtn.textContent;
 							copyBtn.textContent = <?php echo wp_json_encode( __( 'Copied', 'whimsical-promo' ) ); ?>;
-							window.setTimeout( function () {
+							window.setTimeout( () => {
 								copyBtn.textContent = label;
 							}, 1500 );
 						};
 
 						if ( navigator.clipboard && navigator.clipboard.writeText ) {
-							navigator.clipboard.writeText( copyArg.value ).then( done, function () {} );
+							navigator.clipboard.writeText( copyArg.value ).then( done, () => {} );
 							return;
 						}
 
@@ -556,7 +555,7 @@ class Meta_Box {
 							if ( document.execCommand( 'copy' ) ) {
 								done();
 							}
-						} catch ( e ) {}
+						} catch {}
 					} );
 				}
 
@@ -564,8 +563,8 @@ class Meta_Box {
 					return;
 				}
 
-				placement.addEventListener( 'change', function () {
-					var isExit = 'exit_intent' === placement.value;
+				placement.addEventListener( 'change', () => {
+					const isExit = 'exit_intent' === placement.value;
 
 					if ( hookRow ) {
 						hookRow.style.display = isExit ? 'none' : '';
@@ -581,15 +580,15 @@ class Meta_Box {
 					}
 
 					// Only swap the value while it still holds the other placement's default.
-					var other = isExit ? dayDefault.inline : dayDefault.exit;
+					const other = isExit ? dayDefault.inline : dayDefault.exit;
 					if ( cookieDays && cookieDays.value === other ) {
 						cookieDays.value = isExit ? dayDefault.exit : dayDefault.inline;
 					}
 				} );
 
-				Array.prototype.forEach.call( document.querySelectorAll( '.whim-token-picker' ), function ( picker ) {
-					picker.addEventListener( 'input', function () {
-						var target = document.getElementById( picker.getAttribute( 'data-whim-target' ) );
+				document.querySelectorAll( '.whim-token-picker' ).forEach( ( picker ) => {
+					picker.addEventListener( 'input', () => {
+						const target = document.getElementById( picker.getAttribute( 'data-whim-target' ) );
 						if ( target ) {
 							target.value = picker.value;
 						}
@@ -601,20 +600,20 @@ class Meta_Box {
 		<?php if ( $can_edit ) : ?>
 			<script>
 				( function () {
-					var templates = <?php echo wp_json_encode( $templates, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>;
-					var wrapperId = <?php echo wp_json_encode( $wrapper_id ); ?>;
-					var postId    = <?php echo wp_json_encode( $post_id ); ?>;
-					var field     = document.getElementById( 'whim_custom_css' );
-					var style     = document.getElementById( 'whim_style_preset' );
-					var load      = document.getElementById( 'whim-load-template' );
-					var clear     = document.getElementById( 'whim-clear-css' );
+					const templates = <?php echo wp_json_encode( $templates, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?>;
+					const wrapperId = <?php echo wp_json_encode( $wrapper_id ); ?>;
+					const postId    = <?php echo wp_json_encode( $post_id ); ?>;
+					const field     = document.getElementById( 'whim_custom_css' );
+					const style     = document.getElementById( 'whim_style_preset' );
+					const load      = document.getElementById( 'whim-load-template' );
+					const clear     = document.getElementById( 'whim-clear-css' );
 
 					if ( ! field || ! style || ! load ) {
 						return;
 					}
 
-					load.addEventListener( 'click', function () {
-						var template = templates[ style.value ];
+					load.addEventListener( 'click', () => {
+						const template = templates[ style.value ];
 
 						if ( ! template ) {
 							window.alert( <?php echo wp_json_encode( __( 'That style has no template file to load.', 'whimsical-promo' ) ); ?> );
@@ -628,28 +627,28 @@ class Meta_Box {
 						// Same substitution the server does on output (Styles::scope), so the
 						// editor is reading the real thing rather than a placeholder.
 						field.value = template
-							.replace( /#whim-bogo(?:-(?:\d+|ID))?(?![\w-])/gi, '#' + wrapperId )
-							.replace( /\bwhim-kf-(?:(?:\d+|ID)-)?/gi, 'whim-kf-' + postId + '-' );
+							.replace( /#whim-bogo(?:-(?:\d+|ID))?(?![\w-])/gi, `#${ wrapperId }` )
+							.replace( /\bwhim-kf-(?:(?:\d+|ID)-)?/gi, `whim-kf-${ postId }-` );
 						field.focus();
 					} );
 
-					var briefBtn = document.getElementById( 'whim-copy-brief' );
-					var briefBox = document.getElementById( 'whim-agent-brief' );
+					const briefBtn = document.getElementById( 'whim-copy-brief' );
+					const briefBox = document.getElementById( 'whim-agent-brief' );
 
 					if ( briefBtn && briefBox ) {
-						briefBtn.addEventListener( 'click', function () {
+						briefBtn.addEventListener( 'click', () => {
 							briefBox.select();
 
-							var done = function () {
-								var label = briefBtn.textContent;
+							const done = () => {
+								const label = briefBtn.textContent;
 								briefBtn.textContent = <?php echo wp_json_encode( __( 'Copied', 'whimsical-promo' ) ); ?>;
-								window.setTimeout( function () {
+								window.setTimeout( () => {
 									briefBtn.textContent = label;
 								}, 1500 );
 							};
 
 							if ( navigator.clipboard && navigator.clipboard.writeText ) {
-								navigator.clipboard.writeText( briefBox.value ).then( done, function () {} );
+								navigator.clipboard.writeText( briefBox.value ).then( done, () => {} );
 								return;
 							}
 
@@ -657,12 +656,12 @@ class Meta_Box {
 								if ( document.execCommand( 'copy' ) ) {
 									done();
 								}
-							} catch ( e ) {}
+							} catch {}
 						} );
 					}
 
 					if ( clear ) {
-						clear.addEventListener( 'click', function () {
+						clear.addEventListener( 'click', () => {
 							if ( ! field.value.trim() || window.confirm( <?php echo wp_json_encode( __( 'Discard this Custom CSS and go back to the selected style as shipped?', 'whimsical-promo' ) ); ?> ) ) {
 								field.value = '';
 							}
@@ -726,8 +725,8 @@ class Meta_Box {
 		$raw_types = isset( $_POST['whim_post_types'] ) && is_array( $_POST['whim_post_types'] )
 			? array_map(
 				'sanitize_text_field',
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Every scalar survivor is sanitized immediately above via array_map( 'sanitize_text_field', ... ); array_filter() only drops non-scalars before that.
-				array_filter( wp_unslash( $_POST['whim_post_types'] ), 'is_scalar' )
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Every survivor is sanitized immediately above via array_map( 'sanitize_text_field', ... ); array_filter() only drops non-strings before that.
+				array_filter( wp_unslash( $_POST['whim_post_types'] ), 'is_string' )
 			)
 			: [];
 
@@ -841,7 +840,7 @@ class Meta_Box {
 		$flagged = new WP_Query(
 			[
 				'post_type'              => Post_Type::POST_TYPE,
-				'post_status'            => 'any',
+				'post_status'            => [ 'publish', 'future', 'draft', 'pending', 'private', 'trash' ], // 'any' omits trash, so a restored promo would keep the flag.
 				'posts_per_page'         => self::EXIT_FIRST_LIMIT,
 				'fields'                 => 'ids',
 				'meta_key'               => 'whim_exit_first', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Matches the one flagged promo instead of reading meta for every promo on the site.
