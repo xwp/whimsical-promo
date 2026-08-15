@@ -9,6 +9,7 @@ namespace WhimsicalPromo\Tests;
 
 use WhimsicalPromo\Agent_Brief;
 use WhimsicalPromo\Post_Type;
+use WhimsicalPromo\Render;
 use WhimsicalPromo\Styles;
 
 /**
@@ -121,6 +122,47 @@ class Agent_Brief_Test extends Promo_TestCase {
 				Styles::template( (string) $slug ),
 				$slug . ' uses a scroll-driven timeline, which is inert on this site.'
 			);
+		}
+	}
+
+	/**
+	 * Every SVG element the body keeps is named in the brief. Widening the allowlist
+	 * without saying so leaves the agent drawing icons out of a smaller vocabulary than
+	 * it has; narrowing it without saying so has the agent write markup that is dropped.
+	 */
+	public function test_brief_names_every_svg_element_the_body_keeps(): void {
+		$brief = Agent_Brief::text( $this->create_promo() );
+
+		foreach ( array_keys( Render::svg_allowlist() ) as $element ) {
+			$this->assertStringContainsString( '`' . $element . '`', $brief, $element . ' is missing from the brief.' );
+		}
+	}
+
+	/**
+	 * An icon survives the body and every way of dressing one up as an attack does not.
+	 * kses keeps only what the allowlist names, so this is the test that has to hold if
+	 * the allowlist is ever widened again.
+	 */
+	public function test_body_keeps_an_icon_and_drops_everything_else(): void {
+		$promo_id = $this->create_promo(
+			[],
+			[
+				'post_content' => '<p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor">'
+					. '<line x1="18" y1="6" x2="6" y2="18"/><path d="M6 6 18 18"/></svg></p>'
+					. '<p><svg onload="alert(1)"><script>alert(2)</script><use href="//evil.test/x#y"/>'
+					. '<path d="M0 0" onclick="alert(3)" style="behavior:url(x)"/></svg></p>',
+			]
+		);
+
+		$body = Render::get_instance()->render_body( $this->get_promo( $promo_id ) );
+
+		$this->assertStringContainsString( '<svg', $body, 'An inline icon should survive the body.' );
+		$this->assertStringContainsString( 'viewBox="0 0 24 24"', $body, 'viewBox should keep its casing.' );
+		$this->assertStringContainsString( '<line', $body );
+		$this->assertStringContainsString( 'd="M6 6 18 18"', $body );
+
+		foreach ( [ 'onload', 'onclick', '<script', '<use', 'style=', 'evil.test' ] as $attack ) {
+			$this->assertStringNotContainsString( $attack, $body, $attack . ' survived the body allowlist.' );
 		}
 	}
 

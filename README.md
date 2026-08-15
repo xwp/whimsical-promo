@@ -434,11 +434,45 @@ classes, the `--whim-*` tokens the override fields write, the rules above, how
 `.is-revealed` and `.is-lit` are timed, and the promo's current style in full as a
 worked example.
 
+The brief opens by telling the agent to **ask about audience, voice and palette
+before designing**, and to wait for the answer. It is worth the extra turn: the
+same model asked those questions first returns a noticeably stronger card than one
+generated blind, across every model we compared.
+
 The agent returns two blocks — an HTML sample body for the editor and one
 stylesheet for Custom CSS. Nothing is transmitted from the promo screen; copying
 is manual. `Agent_Brief::text()` builds it, and its tests assert the brief keeps
 naming every choice an editor can actually make, so adding a preset or a token
 without mentioning it in the brief fails the suite.
+
+#### Artwork
+
+Ornament belongs in the stylesheet, as a URL-encoded `data:` URI — how all three
+bundled templates draw theirs, and how the Google G on `.whim-btn--google` is
+drawn:
+
+```css
+#whim-bogo-ID .whim-bogo__card::after {
+  content: "";
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23e8443a'/%3E%3C/svg%3E");
+}
+```
+
+A one-off mark — a different close cross, a small logo — can also go into the body
+as inline `<svg>`, which 1.4 allows. `svg`, `g`, `title`, `path`, `circle`,
+`ellipse`, `rect`, `line`, `polyline` and `polygon` survive with their geometry and
+paint attributes; everything else is dropped. Safety is structural rather than a
+capability check — kses keeps only what `Render::svg_allowlist()` lists, so
+`<script>`, `<use>`, `<image>`, `<foreignObject>`, `style` and every `on*` handler
+are gone whoever authored the promo, which matters because promos use ordinary post
+capabilities and are not admin-only in code. `whimsical_promo_kses_allowlist` still
+has the last word.
+
+What does _not_ work is a linked image. `data:` is not in `wp_allowed_protocols()`,
+so `<img src="data:image/svg+xml,…">` has its scheme stripped and is served as
+`src="image/svg+xml,…"`, a relative path that 404s; an invented `example.com` or
+`/wp-content/uploads/…` URL is simply broken. The brief tells the agent not to link
+one.
 
 CSS pasted into a **Custom HTML block** in the promo body will _not_ work:
 `wp_kses_allowed_html( 'post' )` has no `style` element, so it is stripped

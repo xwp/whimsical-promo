@@ -526,6 +526,59 @@ class Render {
 	}
 
 	/**
+	 * The SVG a promo body may carry: enough to draw an icon, and nothing else.
+	 *
+	 * A design occasionally wants a one-off mark — a different close cross — and the
+	 * post allowlist has no `svg` at all, so it was being dropped in silence. Safety
+	 * here is structural rather than a capability check: kses keeps only what is
+	 * listed, so `script`, `use`, `image` and `foreignObject` never arrive, and no
+	 * `on*` handler can, whoever authored the promo.
+	 *
+	 * @return array<string,array<string,bool>>
+	 */
+	public static function svg_allowlist(): array {
+		$paint = [
+			'fill'            => true,
+			'fill-opacity'    => true,
+			'fill-rule'       => true,
+			'clip-rule'       => true,
+			'stroke'          => true,
+			'stroke-width'    => true,
+			'stroke-linecap'  => true,
+			'stroke-linejoin' => true,
+			'stroke-opacity'  => true,
+			'opacity'         => true,
+			'transform'       => true,
+			'class'           => true,
+		];
+
+		return [
+			'svg'      => array_merge(
+				$paint,
+				[
+					'xmlns'       => true,
+					'viewbox'     => true,
+					'width'       => true,
+					'height'      => true,
+					'role'        => true,
+					'focusable'   => true,
+					'aria-hidden' => true,
+					'aria-label'  => true,
+				]
+			),
+			'g'        => $paint,
+			'title'    => [],
+			'path'     => array_merge( $paint, [ 'd' => true ] ),
+			'circle'   => array_merge( $paint, [ 'cx' => true, 'cy' => true, 'r' => true ] ),
+			'ellipse'  => array_merge( $paint, [ 'cx' => true, 'cy' => true, 'rx' => true, 'ry' => true ] ),
+			'rect'     => array_merge( $paint, [ 'x' => true, 'y' => true, 'width' => true, 'height' => true, 'rx' => true, 'ry' => true ] ),
+			'line'     => array_merge( $paint, [ 'x1' => true, 'y1' => true, 'x2' => true, 'y2' => true ] ),
+			'polyline' => array_merge( $paint, [ 'points' => true ] ),
+			'polygon'  => array_merge( $paint, [ 'points' => true ] ),
+		];
+	}
+
+	/**
 	 * Renders promo body content: blocks, then kses, then shortcodes.
 	 *
 	 * Shortcodes run last so trusted plugin output (newsletter forms) is not
@@ -557,7 +610,11 @@ class Render {
 		 * @param array<string,mixed> $allowlist kses allowed HTML.
 		 * @param WP_Post             $promo     The promo post.
 		 */
-		$allowlist = (array) apply_filters( 'whimsical_promo_kses_allowlist', wp_kses_allowed_html( 'post' ), $promo );
+		$allowlist = (array) apply_filters(
+			'whimsical_promo_kses_allowlist',
+			array_merge( wp_kses_allowed_html( 'post' ), self::svg_allowlist() ),
+			$promo
+		);
 
 		$content = wp_kses( $content, $allowlist );
 
