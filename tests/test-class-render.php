@@ -11,6 +11,7 @@ use WhimsicalPromo\Meta_Box;
 use WhimsicalPromo\Post_Type;
 use WhimsicalPromo\Render;
 use WhimsicalPromo\Styles;
+use WP_HTML_Tag_Processor;
 use WP_Post;
 
 /**
@@ -475,7 +476,18 @@ class Render_Test extends Promo_TestCase {
 
 		$output = $this->capture_hook( 'my_hook' );
 
-		$this->assertStringContainsString( '<p class="lead">Read on</p>', $output );
+		// Core adds its own classes to rendered blocks, so match the editor class rather than the whole tag.
+		$paragraph = new WP_HTML_Tag_Processor( $output );
+
+		$this->assertTrue(
+			$paragraph->next_tag(
+				[
+					'tag_name'   => 'p',
+					'class_name' => 'lead',
+				] 
+			) 
+		);
+		$this->assertStringContainsString( '>Read on</p>', $output );
 		$this->assertStringContainsString( 'wp-block-buttons', $output );
 		$this->assertStringContainsString( 'class="wp-block-button__link" href="/subscribe/"', $output );
 		$this->assertStringNotContainsString( 'wp:paragraph', $output );
