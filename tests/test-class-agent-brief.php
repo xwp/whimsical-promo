@@ -157,7 +157,8 @@ class Agent_Brief_Test extends Promo_TestCase {
 		$body = Render::get_instance()->render_body( $this->get_promo( $promo_id ) );
 
 		$this->assertStringContainsString( '<svg', $body, 'An inline icon should survive the body.' );
-		$this->assertStringContainsString( 'viewBox="0 0 24 24"', $body, 'viewBox should keep its casing.' );
+		// kses lowercases attribute names; HTML parsers map viewbox back to viewBox inside SVG.
+		$this->assertStringContainsStringIgnoringCase( 'viewBox="0 0 24 24"', $body, 'viewBox should survive the allowlist.' );
 		$this->assertStringContainsString( '<line', $body );
 		$this->assertStringContainsString( 'd="M6 6 18 18"', $body );
 
